@@ -53,306 +53,252 @@ import org.springframework.web.util.UriComponentsBuilder;
 /**
  * WebSocket Handler for the /run_live endpoint.
  *
- * <p>Manages bidirectional communication for live agent interactions. Assumes the
- * com.google.adk.runner.Runner class has a method: {@code public Flowable<Event> runLive(Session
+ * <p>
+ * Manages bidirectional communication for live agent interactions. Assumes the
+ * com.google.adk.runner.Runner class has a method:
+ * {@code public Flowable<Event> runLive(Session
  * session, Flowable<LiveRequest> liveRequests, List<String> modalities)}
  */
 @Component
 public class LiveWebSocketHandler extends TextWebSocketHandler {
-  private static final Logger log = LoggerFactory.getLogger(LiveWebSocketHandler.class);
 
-  // WebSocket constants
-  private static final String LIVE_REQUEST_QUEUE_ATTR = "liveRequestQueue";
-  private static final String LIVE_SUBSCRIPTION_ATTR = "liveSubscription";
-  private static final int WEBSOCKET_MAX_BYTES_FOR_REASON = 123;
-  private static final int WEBSOCKET_PROTOCOL_ERROR = 1002;
-  private static final int WEBSOCKET_INTERNAL_SERVER_ERROR = 1011;
+	private static final Logger log = LoggerFactory.getLogger(LiveWebSocketHandler.class);
 
-  private final ObjectMapper objectMapper;
-  private final BaseSessionService sessionService;
-  private final RunnerService runnerService;
+	// WebSocket constants
+	private static final String LIVE_REQUEST_QUEUE_ATTR = "liveRequestQueue";
 
-  @Autowired
-  public LiveWebSocketHandler(
-      ObjectMapper objectMapper, BaseSessionService sessionService, RunnerService runnerService) {
-    this.objectMapper = objectMapper;
-    this.sessionService = sessionService;
-    this.runnerService = runnerService;
-  }
+	private static final String LIVE_SUBSCRIPTION_ATTR = "liveSubscription";
 
-  @Override
-  public void afterConnectionEstablished(WebSocketSession wsSession) throws Exception {
-    URI uri = wsSession.getUri();
-    if (uri == null) {
-      log.warn("WebSocket session URI is null, cannot establish connection.");
-      wsSession.close(CloseStatus.SERVER_ERROR.withReason("Invalid URI"));
-      return;
-    }
-    String path = uri.getPath();
-    log.info("WebSocket connection established: {} from {}", wsSession.getId(), uri);
+	private static final int WEBSOCKET_MAX_BYTES_FOR_REASON = 123;
 
-    MultiValueMap<String, String> queryParams =
-        UriComponentsBuilder.fromUri(uri).build().getQueryParams();
-    String appName = queryParams.getFirst("app_name");
-    String userId = queryParams.getFirst("user_id");
-    String sessionId = queryParams.getFirst("session_id");
+	private static final int WEBSOCKET_PROTOCOL_ERROR = 1002;
 
-    if (appName == null || appName.trim().isEmpty()) {
-      log.warn(
-          "WebSocket connection for session {} rejected: app_name query parameter is required and"
-              + " cannot be empty. URI: {}",
-          wsSession.getId(),
-          uri);
-      wsSession.close(
-          CloseStatus.POLICY_VIOLATION.withReason(
-              "app_name query parameter is required and cannot be empty"));
-      return;
-    }
-    if (sessionId == null || sessionId.trim().isEmpty()) {
-      log.warn(
-          "WebSocket connection for session {} rejected: session_id query parameter is required"
-              + " and cannot be empty. URI: {}",
-          wsSession.getId(),
-          uri);
-      wsSession.close(
-          CloseStatus.POLICY_VIOLATION.withReason(
-              "session_id query parameter is required and cannot be empty"));
-      return;
-    }
+	private static final int WEBSOCKET_INTERNAL_SERVER_ERROR = 1011;
 
-    log.debug(
-        "Extracted params for WebSocket session {}: appName={}, userId={}, sessionId={},",
-        wsSession.getId(),
-        appName,
-        userId,
-        sessionId);
+	private final ObjectMapper objectMapper;
 
-    RunConfig runConfig =
-        RunConfig.builder()
-            .setResponseModalities(ImmutableList.of(new Modality(Modality.Known.AUDIO)))
-            .setStreamingMode(StreamingMode.BIDI)
-            .build();
+	private final BaseSessionService sessionService;
 
-    Session session;
-    try {
-      session =
-          sessionService.getSession(appName, userId, sessionId, Optional.empty()).blockingGet();
-      if (session == null) {
-        log.warn(
-            "Session not found for WebSocket: app={}, user={}, id={}. Closing connection.",
-            appName,
-            userId,
-            sessionId);
-        wsSession.close(new CloseStatus(WEBSOCKET_PROTOCOL_ERROR, "Session not found"));
-        return;
-      }
-    } catch (Exception e) {
-      log.error(
-          "Error retrieving session for WebSocket: app={}, user={}, id={}",
-          appName,
-          userId,
-          sessionId,
-          e);
-      wsSession.close(CloseStatus.SERVER_ERROR.withReason("Failed to retrieve session"));
-      return;
-    }
+	private final RunnerService runnerService;
 
-    LiveRequestQueue liveRequestQueue = new LiveRequestQueue();
-    wsSession.getAttributes().put(LIVE_REQUEST_QUEUE_ATTR, liveRequestQueue);
+	@Autowired
+	public LiveWebSocketHandler(ObjectMapper objectMapper, BaseSessionService sessionService,
+			RunnerService runnerService) {
+		this.objectMapper = objectMapper;
+		this.sessionService = sessionService;
+		this.runnerService = runnerService;
+	}
 
-    Runner runner;
-    try {
-      runner = this.runnerService.getRunner(appName);
-    } catch (ResponseStatusException e) {
-      log.error(
-          "Failed to get runner for app {} during WebSocket connection: {}",
-          appName,
-          e.getMessage());
-      wsSession.close(CloseStatus.SERVER_ERROR.withReason("Runner unavailable: " + e.getReason()));
-      return;
-    }
+	@Override
+	public void afterConnectionEstablished(WebSocketSession wsSession) throws Exception {
+		URI uri = wsSession.getUri();
+		if (uri == null) {
+			log.warn("WebSocket session URI is null, cannot establish connection.");
+			wsSession.close(CloseStatus.SERVER_ERROR.withReason("Invalid URI"));
+			return;
+		}
+		String path = uri.getPath();
+		log.info("WebSocket connection established: {} from {}", wsSession.getId(), uri);
 
-    Flowable<Event> eventStream = runner.runLive(session, liveRequestQueue, runConfig);
+		MultiValueMap<String, String> queryParams = UriComponentsBuilder.fromUri(uri).build().getQueryParams();
+		String appName = queryParams.getFirst("app_name");
+		String userId = queryParams.getFirst("user_id");
+		String sessionId = queryParams.getFirst("session_id");
 
-    Disposable disposable =
-        eventStream
-            .subscribeOn(Schedulers.io()) // Offload runner work
-            .observeOn(Schedulers.io()) // Send messages on I/O threads
-            .subscribe(
-                event -> {
-                  try {
-                    String jsonEvent = objectMapper.writeValueAsString(event);
-                    log.debug(
-                        "Sending event via WebSocket session {}: {}", wsSession.getId(), jsonEvent);
-                    wsSession.sendMessage(new TextMessage(jsonEvent));
-                  } catch (JsonProcessingException e) {
-                    log.error(
-                        "Error serializing event to JSON for WebSocket session {}",
-                        wsSession.getId(),
-                        e);
-                    // Decide if to close session or just log
-                  } catch (IOException e) {
-                    log.error(
-                        "IOException sending message via WebSocket session {}",
-                        wsSession.getId(),
-                        e);
-                    // This might mean the session is already closed or problematic
-                    // Consider closing/disposing here
-                    try {
-                      wsSession.close(CloseStatus.SERVER_ERROR.withReason("Error sending message"));
-                    } catch (IOException closeException) {
-                      log.warn(
-                          "Failed to close WebSocket connection after send error: {}",
-                          closeException.getMessage());
-                    }
-                  }
-                },
-                error -> {
-                  log.error(
-                      "Error in run_live stream for WebSocket session {}: {}",
-                      wsSession.getId(),
-                      error.getMessage(),
-                      error);
-                  String reason = error.getMessage() != null ? error.getMessage() : "Unknown error";
-                  try {
-                    wsSession.close(
-                        new CloseStatus(
-                            WEBSOCKET_INTERNAL_SERVER_ERROR,
-                            reason.substring(
-                                0, Math.min(reason.length(), WEBSOCKET_MAX_BYTES_FOR_REASON))));
-                  } catch (IOException closeException) {
-                    log.warn(
-                        "Failed to close WebSocket connection after stream error: {}",
-                        closeException.getMessage());
-                  }
-                },
-                () -> {
-                  log.debug(
-                      "run_live stream completed for WebSocket session {}", wsSession.getId());
-                  try {
-                    wsSession.close(CloseStatus.NORMAL);
-                  } catch (IOException closeException) {
-                    log.warn(
-                        "Failed to close WebSocket connection normally: {}",
-                        closeException.getMessage());
-                  }
-                });
-    wsSession.getAttributes().put(LIVE_SUBSCRIPTION_ATTR, disposable);
-    log.debug("Live run started for WebSocket session {}", wsSession.getId());
-  }
+		if (appName == null || appName.trim().isEmpty()) {
+			log.warn("WebSocket connection for session {} rejected: app_name query parameter is required and"
+					+ " cannot be empty. URI: {}", wsSession.getId(), uri);
+			wsSession.close(CloseStatus.POLICY_VIOLATION
+				.withReason("app_name query parameter is required and cannot be empty"));
+			return;
+		}
+		if (sessionId == null || sessionId.trim().isEmpty()) {
+			log.warn("WebSocket connection for session {} rejected: session_id query parameter is required"
+					+ " and cannot be empty. URI: {}", wsSession.getId(), uri);
+			wsSession.close(CloseStatus.POLICY_VIOLATION
+				.withReason("session_id query parameter is required and cannot be empty"));
+			return;
+		}
 
-  @Override
-  protected void handleTextMessage(WebSocketSession wsSession, TextMessage message)
-      throws Exception {
-    LiveRequestQueue liveRequestQueue =
-        (LiveRequestQueue) wsSession.getAttributes().get(LIVE_REQUEST_QUEUE_ATTR);
+		log.debug("Extracted params for WebSocket session {}: appName={}, userId={}, sessionId={},", wsSession.getId(),
+				appName, userId, sessionId);
 
-    if (liveRequestQueue == null) {
-      log.warn(
-          "Received message on WebSocket session {} but LiveRequestQueue is not available (null)."
-              + " Message: {}",
-          wsSession.getId(),
-          message.getPayload());
-      return;
-    }
+		RunConfig runConfig = RunConfig.builder()
+			.setResponseModalities(ImmutableList.of(new Modality(Modality.Known.AUDIO)))
+			.setStreamingMode(StreamingMode.BIDI)
+			.build();
 
-    try {
-      String payload = message.getPayload();
-      log.debug("Received text message on WebSocket session {}: {}", wsSession.getId(), payload);
+		Session session;
+		try {
+			session = sessionService.getSession(appName, userId, sessionId, Optional.empty()).blockingGet();
+			if (session == null) {
+				log.warn("Session not found for WebSocket: app={}, user={}, id={}. Closing connection.", appName,
+						userId, sessionId);
+				wsSession.close(new CloseStatus(WEBSOCKET_PROTOCOL_ERROR, "Session not found"));
+				return;
+			}
+		}
+		catch (Exception e) {
+			log.error("Error retrieving session for WebSocket: app={}, user={}, id={}", appName, userId, sessionId, e);
+			wsSession.close(CloseStatus.SERVER_ERROR.withReason("Failed to retrieve session"));
+			return;
+		}
 
-      JsonNode rootNode = objectMapper.readTree(payload);
-      LiveRequest.Builder liveRequestBuilder = LiveRequest.builder();
+		LiveRequestQueue liveRequestQueue = new LiveRequestQueue();
+		wsSession.getAttributes().put(LIVE_REQUEST_QUEUE_ATTR, liveRequestQueue);
 
-      if (rootNode.has("content")) {
-        Content content = objectMapper.treeToValue(rootNode.get("content"), Content.class);
-        liveRequestBuilder.content(content);
-      }
+		Runner runner;
+		try {
+			runner = this.runnerService.getRunner(appName);
+		}
+		catch (ResponseStatusException e) {
+			log.error("Failed to get runner for app {} during WebSocket connection: {}", appName, e.getMessage());
+			wsSession.close(CloseStatus.SERVER_ERROR.withReason("Runner unavailable: " + e.getReason()));
+			return;
+		}
 
-      if (rootNode.has("blob")) {
-        JsonNode blobNode = rootNode.get("blob");
-        Blob.Builder blobBuilder = Blob.builder();
-        if (blobNode.has("displayName")) {
-          blobBuilder.displayName(blobNode.get("displayName").asText());
-        }
-        if (blobNode.has("data")) {
-          blobBuilder.data(blobNode.get("data").binaryValue());
-        }
-        // Handle both mime_type and mimeType. Blob states mimeType but we get mime_type from the
-        // frontend.
-        String mimeType =
-            blobNode.has("mimeType")
-                ? blobNode.get("mimeType").asText()
-                : (blobNode.has("mime_type") ? blobNode.get("mime_type").asText() : null);
-        if (mimeType != null) {
-          blobBuilder.mimeType(mimeType);
-        }
-        liveRequestBuilder.blob(blobBuilder.build());
-      }
-      LiveRequest liveRequest = liveRequestBuilder.build();
-      liveRequestQueue.send(liveRequest);
-    } catch (JsonProcessingException e) {
-      log.error(
-          "Error deserializing LiveRequest from WebSocket message for session {}: {}",
-          wsSession.getId(),
-          message.getPayload(),
-          e);
-      wsSession.sendMessage(
-          new TextMessage(
-              "{\"error\":\"Invalid JSON format for LiveRequest\", \"details\":\""
-                  + e.getMessage()
-                  + "\"}"));
-    } catch (Exception e) {
-      log.error(
-          "Unexpected error processing text message for WebSocket session {}: {}",
-          wsSession.getId(),
-          message.getPayload(),
-          e);
-      String reason = e.getMessage() != null ? e.getMessage() : "Error processing message";
-      wsSession.close(
-          new CloseStatus(
-              1011,
-              reason.substring(0, Math.min(reason.length(), WEBSOCKET_MAX_BYTES_FOR_REASON))));
-    }
-  }
+		Flowable<Event> eventStream = runner.runLive(session, liveRequestQueue, runConfig);
 
-  @Override
-  public void handleTransportError(WebSocketSession wsSession, Throwable exception)
-      throws Exception {
-    log.error(
-        "WebSocket transport error for session {}: {}",
-        wsSession.getId(),
-        exception.getMessage(),
-        exception);
-    // Cleanup resources similar to afterConnectionClosed
-    cleanupSession(wsSession);
-    if (wsSession.isOpen()) {
-      String reason = exception.getMessage() != null ? exception.getMessage() : "Transport error";
-      wsSession.close(
-          CloseStatus.PROTOCOL_ERROR.withReason(
-              reason.substring(0, Math.min(reason.length(), WEBSOCKET_MAX_BYTES_FOR_REASON))));
-    }
-  }
+		Disposable disposable = eventStream.subscribeOn(Schedulers.io()) // Offload runner
+																			// work
+			.observeOn(Schedulers.io()) // Send messages on I/O threads
+			.subscribe(event -> {
+				try {
+					String jsonEvent = objectMapper.writeValueAsString(event);
+					log.debug("Sending event via WebSocket session {}: {}", wsSession.getId(), jsonEvent);
+					wsSession.sendMessage(new TextMessage(jsonEvent));
+				}
+				catch (JsonProcessingException e) {
+					log.error("Error serializing event to JSON for WebSocket session {}", wsSession.getId(), e);
+					// Decide if to close session or just log
+				}
+				catch (IOException e) {
+					log.error("IOException sending message via WebSocket session {}", wsSession.getId(), e);
+					// This might mean the session is already closed or problematic
+					// Consider closing/disposing here
+					try {
+						wsSession.close(CloseStatus.SERVER_ERROR.withReason("Error sending message"));
+					}
+					catch (IOException closeException) {
+						log.warn("Failed to close WebSocket connection after send error: {}",
+								closeException.getMessage());
+					}
+				}
+			}, error -> {
+				log.error("Error in run_live stream for WebSocket session {}: {}", wsSession.getId(),
+						error.getMessage(), error);
+				String reason = error.getMessage() != null ? error.getMessage() : "Unknown error";
+				try {
+					wsSession.close(new CloseStatus(WEBSOCKET_INTERNAL_SERVER_ERROR,
+							reason.substring(0, Math.min(reason.length(), WEBSOCKET_MAX_BYTES_FOR_REASON))));
+				}
+				catch (IOException closeException) {
+					log.warn("Failed to close WebSocket connection after stream error: {}",
+							closeException.getMessage());
+				}
+			}, () -> {
+				log.debug("run_live stream completed for WebSocket session {}", wsSession.getId());
+				try {
+					wsSession.close(CloseStatus.NORMAL);
+				}
+				catch (IOException closeException) {
+					log.warn("Failed to close WebSocket connection normally: {}", closeException.getMessage());
+				}
+			});
+		wsSession.getAttributes().put(LIVE_SUBSCRIPTION_ATTR, disposable);
+		log.debug("Live run started for WebSocket session {}", wsSession.getId());
+	}
 
-  @Override
-  public void afterConnectionClosed(WebSocketSession wsSession, CloseStatus status)
-      throws Exception {
-    log.info(
-        "WebSocket connection closed: {} with status {}", wsSession.getId(), status.toString());
-    cleanupSession(wsSession);
-  }
+	@Override
+	protected void handleTextMessage(WebSocketSession wsSession, TextMessage message) throws Exception {
+		LiveRequestQueue liveRequestQueue = (LiveRequestQueue) wsSession.getAttributes().get(LIVE_REQUEST_QUEUE_ATTR);
 
-  private void cleanupSession(WebSocketSession wsSession) {
-    LiveRequestQueue liveRequestQueue =
-        (LiveRequestQueue) wsSession.getAttributes().remove(LIVE_REQUEST_QUEUE_ATTR);
-    if (liveRequestQueue != null) {
-      liveRequestQueue.close(); // Signal end of input to the runner
-      log.debug("Called close() on LiveRequestQueue for session {}", wsSession.getId());
-    }
+		if (liveRequestQueue == null) {
+			log.warn("Received message on WebSocket session {} but LiveRequestQueue is not available (null)."
+					+ " Message: {}", wsSession.getId(), message.getPayload());
+			return;
+		}
 
-    Disposable disposable = (Disposable) wsSession.getAttributes().remove(LIVE_SUBSCRIPTION_ATTR);
-    if (disposable != null && !disposable.isDisposed()) {
-      disposable.dispose();
-    }
-    log.debug("Cleaned up resources for WebSocket session {}", wsSession.getId());
-  }
+		try {
+			String payload = message.getPayload();
+			log.debug("Received text message on WebSocket session {}: {}", wsSession.getId(), payload);
+
+			JsonNode rootNode = objectMapper.readTree(payload);
+			LiveRequest.Builder liveRequestBuilder = LiveRequest.builder();
+
+			if (rootNode.has("content")) {
+				Content content = objectMapper.treeToValue(rootNode.get("content"), Content.class);
+				liveRequestBuilder.content(content);
+			}
+
+			if (rootNode.has("blob")) {
+				JsonNode blobNode = rootNode.get("blob");
+				Blob.Builder blobBuilder = Blob.builder();
+				if (blobNode.has("displayName")) {
+					blobBuilder.displayName(blobNode.get("displayName").asText());
+				}
+				if (blobNode.has("data")) {
+					blobBuilder.data(blobNode.get("data").binaryValue());
+				}
+				// Handle both mime_type and mimeType. Blob states mimeType but we get
+				// mime_type from the
+				// frontend.
+				String mimeType = blobNode.has("mimeType") ? blobNode.get("mimeType").asText()
+						: (blobNode.has("mime_type") ? blobNode.get("mime_type").asText() : null);
+				if (mimeType != null) {
+					blobBuilder.mimeType(mimeType);
+				}
+				liveRequestBuilder.blob(blobBuilder.build());
+			}
+			LiveRequest liveRequest = liveRequestBuilder.build();
+			liveRequestQueue.send(liveRequest);
+		}
+		catch (JsonProcessingException e) {
+			log.error("Error deserializing LiveRequest from WebSocket message for session {}: {}", wsSession.getId(),
+					message.getPayload(), e);
+			wsSession.sendMessage(new TextMessage(
+					"{\"error\":\"Invalid JSON format for LiveRequest\", \"details\":\"" + e.getMessage() + "\"}"));
+		}
+		catch (Exception e) {
+			log.error("Unexpected error processing text message for WebSocket session {}: {}", wsSession.getId(),
+					message.getPayload(), e);
+			String reason = e.getMessage() != null ? e.getMessage() : "Error processing message";
+			wsSession.close(new CloseStatus(1011,
+					reason.substring(0, Math.min(reason.length(), WEBSOCKET_MAX_BYTES_FOR_REASON))));
+		}
+	}
+
+	@Override
+	public void handleTransportError(WebSocketSession wsSession, Throwable exception) throws Exception {
+		log.error("WebSocket transport error for session {}: {}", wsSession.getId(), exception.getMessage(), exception);
+		// Cleanup resources similar to afterConnectionClosed
+		cleanupSession(wsSession);
+		if (wsSession.isOpen()) {
+			String reason = exception.getMessage() != null ? exception.getMessage() : "Transport error";
+			wsSession.close(CloseStatus.PROTOCOL_ERROR
+				.withReason(reason.substring(0, Math.min(reason.length(), WEBSOCKET_MAX_BYTES_FOR_REASON))));
+		}
+	}
+
+	@Override
+	public void afterConnectionClosed(WebSocketSession wsSession, CloseStatus status) throws Exception {
+		log.info("WebSocket connection closed: {} with status {}", wsSession.getId(), status.toString());
+		cleanupSession(wsSession);
+	}
+
+	private void cleanupSession(WebSocketSession wsSession) {
+		LiveRequestQueue liveRequestQueue = (LiveRequestQueue) wsSession.getAttributes()
+			.remove(LIVE_REQUEST_QUEUE_ATTR);
+		if (liveRequestQueue != null) {
+			liveRequestQueue.close(); // Signal end of input to the runner
+			log.debug("Called close() on LiveRequestQueue for session {}", wsSession.getId());
+		}
+
+		Disposable disposable = (Disposable) wsSession.getAttributes().remove(LIVE_SUBSCRIPTION_ATTR);
+		if (disposable != null && !disposable.isDisposed()) {
+			disposable.dispose();
+		}
+		log.debug("Cleaned up resources for WebSocket session {}", wsSession.getId());
+	}
+
 }

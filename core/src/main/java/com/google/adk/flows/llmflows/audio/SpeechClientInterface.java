@@ -21,25 +21,25 @@ import com.google.cloud.speech.v1.RecognitionConfig;
 import com.google.cloud.speech.v1.RecognizeResponse;
 
 /**
- * Interface for a speech-to-text client. Allows for different implementations (e.g.,
- * Cloud, Mocks).
+ * Interface for a speech-to-text client. Allows for different implementations (e.g., Cloud, Mocks).
  */
 public interface SpeechClientInterface extends AutoCloseable {
 
-	/**
-	 * Performs synchronous speech recognition.
-	 * @param config The recognition configuration.
-	 * @param audio The audio data to transcribe.
-	 * @return The recognition response.
-	 * @throws Exception if an error occurs during recognition.
-	 */
-	RecognizeResponse recognize(RecognitionConfig config, RecognitionAudio audio) throws Exception;
+  /**
+   * Performs synchronous speech recognition.
+   *
+   * @param config The recognition configuration.
+   * @param audio The audio data to transcribe.
+   * @return The recognition response.
+   * @throws Exception if an error occurs during recognition.
+   */
+  RecognizeResponse recognize(RecognitionConfig config, RecognitionAudio audio) throws Exception;
 
-	/**
-	 * Closes the client and releases any resources.
-	 * @throws Exception if an error occurs during closing.
-	 */
-	@Override
-	void close() throws Exception;
-
+  /**
+   * Closes the client and releases any resources.
+   *
+   * @throws Exception if an error occurs during closing.
+   */
+  @Override
+  void close() throws Exception;
 }

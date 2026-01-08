@@ -21,43 +21,47 @@ import java.util.Map;
 
 /** Per-invocation replay state to isolate concurrent runs. */
 class InvocationReplayState {
-  private final String testCasePath;
-  private final int userMessageIndex;
-  private final Recordings recordings;
 
-  // Per-agent replay indices for parallel execution
-  // key: agent_name -> current replay index for that agent
-  private final Map<String, Integer> agentReplayIndices;
+	private final String testCasePath;
 
-  public InvocationReplayState(String testCasePath, int userMessageIndex, Recordings recordings) {
-    this.testCasePath = testCasePath;
-    this.userMessageIndex = userMessageIndex;
-    this.recordings = recordings;
-    this.agentReplayIndices = new HashMap<>();
-  }
+	private final int userMessageIndex;
 
-  public String getTestCasePath() {
-    return testCasePath;
-  }
+	private final Recordings recordings;
 
-  public int getUserMessageIndex() {
-    return userMessageIndex;
-  }
+	// Per-agent replay indices for parallel execution
+	// key: agent_name -> current replay index for that agent
+	private final Map<String, Integer> agentReplayIndices;
 
-  public Recordings getRecordings() {
-    return recordings;
-  }
+	public InvocationReplayState(String testCasePath, int userMessageIndex, Recordings recordings) {
+		this.testCasePath = testCasePath;
+		this.userMessageIndex = userMessageIndex;
+		this.recordings = recordings;
+		this.agentReplayIndices = new HashMap<>();
+	}
 
-  public int getAgentReplayIndex(String agentName) {
-    return agentReplayIndices.getOrDefault(agentName, 0);
-  }
+	public String getTestCasePath() {
+		return testCasePath;
+	}
 
-  public void setAgentReplayIndex(String agentName, int index) {
-    agentReplayIndices.put(agentName, index);
-  }
+	public int getUserMessageIndex() {
+		return userMessageIndex;
+	}
 
-  public void incrementAgentReplayIndex(String agentName) {
-    int currentIndex = getAgentReplayIndex(agentName);
-    setAgentReplayIndex(agentName, currentIndex + 1);
-  }
+	public Recordings getRecordings() {
+		return recordings;
+	}
+
+	public int getAgentReplayIndex(String agentName) {
+		return agentReplayIndices.getOrDefault(agentName, 0);
+	}
+
+	public void setAgentReplayIndex(String agentName, int index) {
+		agentReplayIndices.put(agentName, index);
+	}
+
+	public void incrementAgentReplayIndex(String agentName) {
+		int currentIndex = getAgentReplayIndex(agentName);
+		setAgentReplayIndex(agentName, currentIndex + 1);
+	}
+
 }

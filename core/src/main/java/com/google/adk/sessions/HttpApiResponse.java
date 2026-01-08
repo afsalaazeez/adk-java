@@ -22,23 +22,22 @@ import okhttp3.ResponseBody;
 /** Wraps a real HTTP response to expose the methods needed by the GenAI SDK. */
 public final class HttpApiResponse extends ApiResponse {
 
-	private final Response response;
+  private final Response response;
 
-	/** Constructs a HttpApiResponse instance with the response. */
-	public HttpApiResponse(Response response) {
-		this.response = response;
-	}
+  /** Constructs a HttpApiResponse instance with the response. */
+  public HttpApiResponse(Response response) {
+    this.response = response;
+  }
 
-	/** Returns the HttpEntity from the response. */
-	@Override
-	public ResponseBody getResponseBody() {
-		return response.body();
-	}
+  /** Returns the HttpEntity from the response. */
+  @Override
+  public ResponseBody getResponseBody() {
+    return response.body();
+  }
 
-	/** Closes the Http response. */
-	@Override
-	public void close() {
-		response.close();
-	}
-
+  /** Closes the Http response. */
+  @Override
+  public void close() {
+    response.close();
+  }
 }

@@ -30,84 +30,85 @@ import org.slf4j.LoggerFactory;
 /**
  * Manages MCP client sessions.
  *
- * <p>
- * This class provides methods for creating and initializing MCP client sessions, handling
+ * <p>This class provides methods for creating and initializing MCP client sessions, handling
  * different connection parameters and transport builders.
  */
 // TODO(b/413489523): Implement this class.
 public class McpSessionManager {
 
-	private final Object connectionParams; // ServerParameters or SseServerParameters
+  private final Object connectionParams; // ServerParameters or SseServerParameters
 
-	private final McpTransportBuilder transportBuilder;
+  private final McpTransportBuilder transportBuilder;
 
-	private static final Logger logger = LoggerFactory.getLogger(McpSessionManager.class);
+  private static final Logger logger = LoggerFactory.getLogger(McpSessionManager.class);
 
-	public McpSessionManager(Object connectionParams) {
-		this(connectionParams, new DefaultMcpTransportBuilder());
-	}
+  public McpSessionManager(Object connectionParams) {
+    this(connectionParams, new DefaultMcpTransportBuilder());
+  }
 
-	public McpSessionManager(Object connectionParams, McpTransportBuilder transportBuilder) {
-		this.connectionParams = connectionParams;
-		this.transportBuilder = transportBuilder;
-	}
+  public McpSessionManager(Object connectionParams, McpTransportBuilder transportBuilder) {
+    this.connectionParams = connectionParams;
+    this.transportBuilder = transportBuilder;
+  }
 
-	public McpSyncClient createSession() {
-		return initializeSession(this.connectionParams, this.transportBuilder);
-	}
+  public McpSyncClient createSession() {
+    return initializeSession(this.connectionParams, this.transportBuilder);
+  }
 
-	public static McpSyncClient initializeSession(Object connectionParams) {
-		return initializeSession(connectionParams, new DefaultMcpTransportBuilder());
-	}
+  public static McpSyncClient initializeSession(Object connectionParams) {
+    return initializeSession(connectionParams, new DefaultMcpTransportBuilder());
+  }
 
-	public static McpSyncClient initializeSession(Object connectionParams, McpTransportBuilder transportBuilder) {
-		Duration initializationTimeout = null;
-		Duration requestTimeout = null;
-		McpClientTransport transport = transportBuilder.build(connectionParams);
-		if (connectionParams instanceof SseServerParameters sseServerParams) {
-			initializationTimeout = sseServerParams.timeout();
-			requestTimeout = sseServerParams.sseReadTimeout();
-		}
-		else if (connectionParams instanceof StreamableHttpServerParameters streamableParams) {
-			initializationTimeout = streamableParams.timeout();
-			requestTimeout = streamableParams.readTimeout();
-		}
-		McpSyncClient client = McpClient.sync(transport)
-			.initializationTimeout(Optional.ofNullable(initializationTimeout).orElse(Duration.ofMinutes(5)))
-			.requestTimeout(Optional.ofNullable(requestTimeout).orElse(Duration.ofMinutes(5)))
-			.loggingConsumer(new McpServerLogConsumer())
-			.capabilities(ClientCapabilities.builder().build())
-			.build();
-		InitializeResult initResult = client.initialize();
-		logger.debug("Initialize Client Result: {}", initResult);
-		return client;
-	}
+  public static McpSyncClient initializeSession(
+      Object connectionParams, McpTransportBuilder transportBuilder) {
+    Duration initializationTimeout = null;
+    Duration requestTimeout = null;
+    McpClientTransport transport = transportBuilder.build(connectionParams);
+    if (connectionParams instanceof SseServerParameters sseServerParams) {
+      initializationTimeout = sseServerParams.timeout();
+      requestTimeout = sseServerParams.sseReadTimeout();
+    } else if (connectionParams instanceof StreamableHttpServerParameters streamableParams) {
+      initializationTimeout = streamableParams.timeout();
+      requestTimeout = streamableParams.readTimeout();
+    }
+    McpSyncClient client =
+        McpClient.sync(transport)
+            .initializationTimeout(
+                Optional.ofNullable(initializationTimeout).orElse(Duration.ofMinutes(5)))
+            .requestTimeout(Optional.ofNullable(requestTimeout).orElse(Duration.ofMinutes(5)))
+            .loggingConsumer(new McpServerLogConsumer())
+            .capabilities(ClientCapabilities.builder().build())
+            .build();
+    InitializeResult initResult = client.initialize();
+    logger.debug("Initialize Client Result: {}", initResult);
+    return client;
+  }
 
-	public McpAsyncClient createAsyncSession() {
-		return initializeAsyncSession(this.connectionParams);
-	}
+  public McpAsyncClient createAsyncSession() {
+    return initializeAsyncSession(this.connectionParams);
+  }
 
-	public static McpAsyncClient initializeAsyncSession(Object connectionParams) {
-		return initializeAsyncSession(connectionParams, new DefaultMcpTransportBuilder());
-	}
+  public static McpAsyncClient initializeAsyncSession(Object connectionParams) {
+    return initializeAsyncSession(connectionParams, new DefaultMcpTransportBuilder());
+  }
 
-	public static McpAsyncClient initializeAsyncSession(Object connectionParams, McpTransportBuilder transportBuilder) {
-		Duration initializationTimeout = null;
-		Duration requestTimeout = null;
-		McpClientTransport transport = transportBuilder.build(connectionParams);
-		if (connectionParams instanceof SseServerParameters sseServerParams) {
-			initializationTimeout = sseServerParams.timeout();
-			requestTimeout = sseServerParams.sseReadTimeout();
-		}
-		else if (connectionParams instanceof StreamableHttpServerParameters streamableParams) {
-			initializationTimeout = streamableParams.timeout();
-			requestTimeout = streamableParams.readTimeout();
-		}
-		return McpClient.async(transport)
-			.initializationTimeout(initializationTimeout == null ? Duration.ofMinutes(5) : initializationTimeout)
-			.requestTimeout(requestTimeout == null ? Duration.ofMinutes(5) : requestTimeout)
-			.capabilities(ClientCapabilities.builder().build())
-			.build();
-	}
-
+  public static McpAsyncClient initializeAsyncSession(
+      Object connectionParams, McpTransportBuilder transportBuilder) {
+    Duration initializationTimeout = null;
+    Duration requestTimeout = null;
+    McpClientTransport transport = transportBuilder.build(connectionParams);
+    if (connectionParams instanceof SseServerParameters sseServerParams) {
+      initializationTimeout = sseServerParams.timeout();
+      requestTimeout = sseServerParams.sseReadTimeout();
+    } else if (connectionParams instanceof StreamableHttpServerParameters streamableParams) {
+      initializationTimeout = streamableParams.timeout();
+      requestTimeout = streamableParams.readTimeout();
+    }
+    return McpClient.async(transport)
+        .initializationTimeout(
+            initializationTimeout == null ? Duration.ofMinutes(5) : initializationTimeout)
+        .requestTimeout(requestTimeout == null ? Duration.ofMinutes(5) : requestTimeout)
+        .capabilities(ClientCapabilities.builder().build())
+        .build();
+  }
 }

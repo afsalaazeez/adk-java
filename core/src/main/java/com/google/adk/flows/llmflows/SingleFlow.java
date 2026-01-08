@@ -23,25 +23,32 @@ import java.util.Optional;
 /** Basic LLM flow with fixed request and response processors. */
 public class SingleFlow extends BaseLlmFlow {
 
-	// TODO: We should eventually remove this class since it complicates things.
+  // TODO: We should eventually remove this class since it complicates things.
 
-	protected static final ImmutableList<RequestProcessor> REQUEST_PROCESSORS = ImmutableList.of(new Basic(),
-			new Instructions(), new Identity(), new Contents(), new Examples(), CodeExecution.requestProcessor);
+  protected static final ImmutableList<RequestProcessor> REQUEST_PROCESSORS =
+      ImmutableList.of(
+          new Basic(),
+          new Instructions(),
+          new Identity(),
+          new Contents(),
+          new Examples(),
+          CodeExecution.requestProcessor);
 
-	protected static final ImmutableList<ResponseProcessor> RESPONSE_PROCESSORS = ImmutableList
-		.of(CodeExecution.responseProcessor);
+  protected static final ImmutableList<ResponseProcessor> RESPONSE_PROCESSORS =
+      ImmutableList.of(CodeExecution.responseProcessor);
 
-	public SingleFlow() {
-		this(/* maxSteps= */ Optional.empty());
-	}
+  public SingleFlow() {
+    this(/* maxSteps= */ Optional.empty());
+  }
 
-	public SingleFlow(Optional<Integer> maxSteps) {
-		this(REQUEST_PROCESSORS, RESPONSE_PROCESSORS, maxSteps);
-	}
+  public SingleFlow(Optional<Integer> maxSteps) {
+    this(REQUEST_PROCESSORS, RESPONSE_PROCESSORS, maxSteps);
+  }
 
-	protected SingleFlow(List<RequestProcessor> requestProcessors, List<ResponseProcessor> responseProcessors,
-			Optional<Integer> maxSteps) {
-		super(requestProcessors, responseProcessors, maxSteps);
-	}
-
+  protected SingleFlow(
+      List<RequestProcessor> requestProcessors,
+      List<ResponseProcessor> responseProcessors,
+      Optional<Integer> maxSteps) {
+    super(requestProcessors, responseProcessors, maxSteps);
+  }
 }

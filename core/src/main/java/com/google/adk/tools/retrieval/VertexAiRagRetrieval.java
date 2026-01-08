@@ -46,115 +46,132 @@ import org.slf4j.LoggerFactory;
 /**
  * A retrieval tool that fetches context from Vertex AI RAG.
  *
- * <p>
- * This tool allows to retrieve relevant information based on a query using Vertex AI RAG
+ * <p>This tool allows to retrieve relevant information based on a query using Vertex AI RAG
  * service. It supports configuration of rag resources and a vector distance threshold.
  */
 public class VertexAiRagRetrieval extends BaseRetrievalTool {
 
-	private static final Logger logger = LoggerFactory.getLogger(VertexAiRagRetrieval.class);
+  private static final Logger logger = LoggerFactory.getLogger(VertexAiRagRetrieval.class);
 
-	private final VertexRagServiceClient vertexRagServiceClient;
+  private final VertexRagServiceClient vertexRagServiceClient;
 
-	private final String parent;
+  private final String parent;
 
-	private final List<RagResource> ragResources;
+  private final List<RagResource> ragResources;
 
-	private final Double vectorDistanceThreshold;
+  private final Double vectorDistanceThreshold;
 
-	private final VertexRagStore vertexRagStore;
+  private final VertexRagStore vertexRagStore;
 
-	private final RetrieveContextsRequest.VertexRagStore apiVertexRagStore;
+  private final RetrieveContextsRequest.VertexRagStore apiVertexRagStore;
 
-	public VertexAiRagRetrieval(@Nonnull String name, @Nonnull String description,
-			@Nonnull VertexRagServiceClient vertexRagServiceClient, @Nonnull String parent,
-			@Nullable List<RagResource> ragResources, @Nullable Double vectorDistanceThreshold) {
-		super(name, description);
-		this.vertexRagServiceClient = vertexRagServiceClient;
-		this.parent = parent;
-		this.ragResources = ragResources;
-		this.vectorDistanceThreshold = vectorDistanceThreshold;
+  public VertexAiRagRetrieval(
+      @Nonnull String name,
+      @Nonnull String description,
+      @Nonnull VertexRagServiceClient vertexRagServiceClient,
+      @Nonnull String parent,
+      @Nullable List<RagResource> ragResources,
+      @Nullable Double vectorDistanceThreshold) {
+    super(name, description);
+    this.vertexRagServiceClient = vertexRagServiceClient;
+    this.parent = parent;
+    this.ragResources = ragResources;
+    this.vectorDistanceThreshold = vectorDistanceThreshold;
 
-		// For Gemini 2
-		VertexRagStore.Builder vertexRagStoreBuilder = VertexRagStore.builder();
-		if (this.ragResources != null) {
-			vertexRagStoreBuilder.ragResources(this.ragResources.stream()
-				.map(ragResource -> VertexRagStoreRagResource.builder().ragCorpus(ragResource.getRagCorpus()).build())
-				.collect(toImmutableList()));
-		}
-		if (this.vectorDistanceThreshold != null) {
-			vertexRagStoreBuilder.vectorDistanceThreshold(this.vectorDistanceThreshold);
-		}
-		this.vertexRagStore = vertexRagStoreBuilder.build();
+    // For Gemini 2
+    VertexRagStore.Builder vertexRagStoreBuilder = VertexRagStore.builder();
+    if (this.ragResources != null) {
+      vertexRagStoreBuilder.ragResources(
+          this.ragResources.stream()
+              .map(
+                  ragResource ->
+                      VertexRagStoreRagResource.builder()
+                          .ragCorpus(ragResource.getRagCorpus())
+                          .build())
+              .collect(toImmutableList()));
+    }
+    if (this.vectorDistanceThreshold != null) {
+      vertexRagStoreBuilder.vectorDistanceThreshold(this.vectorDistanceThreshold);
+    }
+    this.vertexRagStore = vertexRagStoreBuilder.build();
 
-		// For runAsync
-		RetrieveContextsRequest.VertexRagStore.Builder apiVertexRagStoreBuilder = RetrieveContextsRequest.VertexRagStore
-			.newBuilder();
-		if (this.ragResources != null) {
-			apiVertexRagStoreBuilder.addAllRagResources(this.ragResources);
-		}
-		if (this.vectorDistanceThreshold != null) {
-			apiVertexRagStoreBuilder.setVectorDistanceThreshold(this.vectorDistanceThreshold);
-		}
-		this.apiVertexRagStore = apiVertexRagStoreBuilder.build();
-	}
+    // For runAsync
+    RetrieveContextsRequest.VertexRagStore.Builder apiVertexRagStoreBuilder =
+        RetrieveContextsRequest.VertexRagStore.newBuilder();
+    if (this.ragResources != null) {
+      apiVertexRagStoreBuilder.addAllRagResources(this.ragResources);
+    }
+    if (this.vectorDistanceThreshold != null) {
+      apiVertexRagStoreBuilder.setVectorDistanceThreshold(this.vectorDistanceThreshold);
+    }
+    this.apiVertexRagStore = apiVertexRagStoreBuilder.build();
+  }
 
-	@Override
-	@CanIgnoreReturnValue
-	public Completable processLlmRequest(LlmRequest.Builder llmRequestBuilder, ToolContext toolContext) {
-		LlmRequest llmRequest = llmRequestBuilder.build();
-		// Use Gemini built-in Vertex AI RAG tool for Gemini 2 models or when using Vertex
-		// AI API Model
-		boolean useVertexAi = Boolean.parseBoolean(System.getenv("GOOGLE_GENAI_USE_VERTEXAI"));
-		if (useVertexAi && (llmRequest.model().isPresent() && llmRequest.model().get().startsWith("gemini-2"))) {
-			GenerateContentConfig config = llmRequest.config().orElse(GenerateContentConfig.builder().build());
-			ImmutableList.Builder<Tool> toolsBuilder = ImmutableList.builder();
-			if (config.tools().isPresent()) {
-				toolsBuilder.addAll(config.tools().get());
-			}
-			toolsBuilder
-				.add(Tool.builder().retrieval(Retrieval.builder().vertexRagStore(this.vertexRagStore).build()).build());
-			logger.info("Using Gemini built-in Vertex AI RAG tool for model: {}", llmRequest.model().get());
-			llmRequestBuilder.config(config.toBuilder().tools(toolsBuilder.build()).build());
-			return Completable.complete();
-		}
-		else {
-			// Add the function declaration to the tools
-			return super.processLlmRequest(llmRequestBuilder, toolContext);
-		}
-	}
+  @Override
+  @CanIgnoreReturnValue
+  public Completable processLlmRequest(
+      LlmRequest.Builder llmRequestBuilder, ToolContext toolContext) {
+    LlmRequest llmRequest = llmRequestBuilder.build();
+    // Use Gemini built-in Vertex AI RAG tool for Gemini 2 models or when using Vertex
+    // AI API Model
+    boolean useVertexAi = Boolean.parseBoolean(System.getenv("GOOGLE_GENAI_USE_VERTEXAI"));
+    if (useVertexAi
+        && (llmRequest.model().isPresent() && llmRequest.model().get().startsWith("gemini-2"))) {
+      GenerateContentConfig config =
+          llmRequest.config().orElse(GenerateContentConfig.builder().build());
+      ImmutableList.Builder<Tool> toolsBuilder = ImmutableList.builder();
+      if (config.tools().isPresent()) {
+        toolsBuilder.addAll(config.tools().get());
+      }
+      toolsBuilder.add(
+          Tool.builder()
+              .retrieval(Retrieval.builder().vertexRagStore(this.vertexRagStore).build())
+              .build());
+      logger.info(
+          "Using Gemini built-in Vertex AI RAG tool for model: {}", llmRequest.model().get());
+      llmRequestBuilder.config(config.toBuilder().tools(toolsBuilder.build()).build());
+      return Completable.complete();
+    } else {
+      // Add the function declaration to the tools
+      return super.processLlmRequest(llmRequestBuilder, toolContext);
+    }
+  }
 
-	@Override
-	public Single<Map<String, Object>> runAsync(Map<String, Object> args, ToolContext toolContext) {
-		String query = (String) args.get("query");
-		logger.info("VertexAiRagRetrieval.runAsync called with query: {}", query);
-		return Single.fromCallable(() -> {
-			logger.info("Retrieving context for query: {}", query);
-			RetrieveContextsRequest retrieveContextsRequest = RetrieveContextsRequest.newBuilder()
-				.setParent(this.parent)
-				.setQuery(RagQuery.newBuilder().setText(query))
-				.setVertexRagStore(this.apiVertexRagStore)
-				.build();
-			logger.info("Request to VertexRagService: {}", retrieveContextsRequest);
-			RetrieveContextsResponse response = this.vertexRagServiceClient.retrieveContexts(retrieveContextsRequest);
-			logger.info("Response from VertexRagService: {}", response);
-			if (response.getContexts().getContextsList().isEmpty()) {
-				logger.warn("No matching result found for query: {}", query);
-				return ImmutableMap.of("response",
-						String.format("No matching result found with the config: resources: %s", this.ragResources));
-			}
-			else {
-				logger.info("Found {} matching results for query: {}", response.getContexts().getContextsCount(),
-						query);
-				ImmutableList<String> contexts = response.getContexts()
-					.getContextsList()
-					.stream()
-					.map(RagContexts.Context::getText)
-					.collect(toImmutableList());
-				logger.info("Returning contexts: {}", contexts);
-				return ImmutableMap.of("response", contexts);
-			}
-		});
-	}
-
+  @Override
+  public Single<Map<String, Object>> runAsync(Map<String, Object> args, ToolContext toolContext) {
+    String query = (String) args.get("query");
+    logger.info("VertexAiRagRetrieval.runAsync called with query: {}", query);
+    return Single.fromCallable(
+        () -> {
+          logger.info("Retrieving context for query: {}", query);
+          RetrieveContextsRequest retrieveContextsRequest =
+              RetrieveContextsRequest.newBuilder()
+                  .setParent(this.parent)
+                  .setQuery(RagQuery.newBuilder().setText(query))
+                  .setVertexRagStore(this.apiVertexRagStore)
+                  .build();
+          logger.info("Request to VertexRagService: {}", retrieveContextsRequest);
+          RetrieveContextsResponse response =
+              this.vertexRagServiceClient.retrieveContexts(retrieveContextsRequest);
+          logger.info("Response from VertexRagService: {}", response);
+          if (response.getContexts().getContextsList().isEmpty()) {
+            logger.warn("No matching result found for query: {}", query);
+            return ImmutableMap.of(
+                "response",
+                String.format(
+                    "No matching result found with the config: resources: %s", this.ragResources));
+          } else {
+            logger.info(
+                "Found {} matching results for query: {}",
+                response.getContexts().getContextsCount(),
+                query);
+            ImmutableList<String> contexts =
+                response.getContexts().getContextsList().stream()
+                    .map(RagContexts.Context::getText)
+                    .collect(toImmutableList());
+            logger.info("Returning contexts: {}", contexts);
+            return ImmutableMap.of("response", contexts);
+          }
+        });
+  }
 }

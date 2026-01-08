@@ -26,24 +26,25 @@ import io.reactivex.rxjava3.core.Single;
 /** {@link RequestProcessor} that gives the agent identity from the framework */
 public final class Identity implements RequestProcessor {
 
-	public Identity() {
-	}
+  public Identity() {}
 
-	@Override
-	public Single<RequestProcessor.RequestProcessingResult> processRequest(InvocationContext context,
-			LlmRequest request) {
-		BaseAgent agent = context.agent();
-		StringBuilder builder = new StringBuilder().append("You are an agent. Your internal name is ")
-			.append("\"")
-			.append(agent.name())
-			.append("\"")
-			.append(".");
-		if (!Strings.isNullOrEmpty(agent.description())) {
-			builder.append(" The description about you is \"").append(agent.description()).append("\".");
-		}
-		return Single.just(RequestProcessor.RequestProcessingResult.create(
-				request.toBuilder().appendInstructions(ImmutableList.of(builder.toString())).build(),
-				ImmutableList.of()));
-	}
-
+  @Override
+  public Single<RequestProcessor.RequestProcessingResult> processRequest(
+      InvocationContext context, LlmRequest request) {
+    BaseAgent agent = context.agent();
+    StringBuilder builder =
+        new StringBuilder()
+            .append("You are an agent. Your internal name is ")
+            .append("\"")
+            .append(agent.name())
+            .append("\"")
+            .append(".");
+    if (!Strings.isNullOrEmpty(agent.description())) {
+      builder.append(" The description about you is \"").append(agent.description()).append("\".");
+    }
+    return Single.just(
+        RequestProcessor.RequestProcessingResult.create(
+            request.toBuilder().appendInstructions(ImmutableList.of(builder.toString())).build(),
+            ImmutableList.of()));
+  }
 }

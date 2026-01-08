@@ -22,22 +22,22 @@ import java.util.Optional;
 /** LLM flow with automatic agent transfer support. */
 public class AutoFlow extends SingleFlow {
 
-	/** Adds {@link AgentTransfer} to base request processors. */
-	private static final ImmutableList<RequestProcessor> REQUEST_PROCESSORS = ImmutableList.<RequestProcessor>builder()
-		.addAll(SingleFlow.REQUEST_PROCESSORS)
-		.add(new AgentTransfer())
-		.build();
+  /** Adds {@link AgentTransfer} to base request processors. */
+  private static final ImmutableList<RequestProcessor> REQUEST_PROCESSORS =
+      ImmutableList.<RequestProcessor>builder()
+          .addAll(SingleFlow.REQUEST_PROCESSORS)
+          .add(new AgentTransfer())
+          .build();
 
-	/** Only base response processors. */
-	private static final ImmutableList<ResponseProcessor> RESPONSE_PROCESSORS = ImmutableList
-		.copyOf(SingleFlow.RESPONSE_PROCESSORS);
+  /** Only base response processors. */
+  private static final ImmutableList<ResponseProcessor> RESPONSE_PROCESSORS =
+      ImmutableList.copyOf(SingleFlow.RESPONSE_PROCESSORS);
 
-	public AutoFlow() {
-		this(/* maxSteps= */ Optional.empty());
-	}
+  public AutoFlow() {
+    this(/* maxSteps= */ Optional.empty());
+  }
 
-	public AutoFlow(Optional<Integer> maxSteps) {
-		super(REQUEST_PROCESSORS, RESPONSE_PROCESSORS, maxSteps);
-	}
-
+  public AutoFlow(Optional<Integer> maxSteps) {
+    super(REQUEST_PROCESSORS, RESPONSE_PROCESSORS, maxSteps);
+  }
 }

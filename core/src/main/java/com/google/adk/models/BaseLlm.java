@@ -21,37 +21,37 @@ import io.reactivex.rxjava3.core.Flowable;
 /**
  * Abstract base class for Large Language Models (LLMs).
  *
- * <p>
- * Provides a common interface for interacting with different LLMs.
+ * <p>Provides a common interface for interacting with different LLMs.
  */
 public abstract class BaseLlm {
 
-	/** The name of the LLM model, e.g. gemini-1.5-flash or gemini-1.5-flash-001. */
-	private final String model;
+  /** The name of the LLM model, e.g. gemini-1.5-flash or gemini-1.5-flash-001. */
+  private final String model;
 
-	public BaseLlm(String model) {
-		this.model = model;
-	}
+  public BaseLlm(String model) {
+    this.model = model;
+  }
 
-	/**
-	 * Returns the name of the LLM model.
-	 * @return The name of the LLM model.
-	 */
-	public String model() {
-		return model;
-	}
+  /**
+   * Returns the name of the LLM model.
+   *
+   * @return The name of the LLM model.
+   */
+  public String model() {
+    return model;
+  }
 
-	/**
-	 * Generates one content from the given LLM request and tools.
-	 * @param llmRequest The LLM request containing the input prompt and parameters.
-	 * @param stream A boolean flag indicating whether to stream the response.
-	 * @return A Flowable of LlmResponses. For non-streaming calls, it will only yield one
-	 * LlmResponse. For streaming calls, it may yield more than one LlmResponse, but all
-	 * yielded LlmResponses should be treated as one content by merging their parts.
-	 */
-	public abstract Flowable<LlmResponse> generateContent(LlmRequest llmRequest, boolean stream);
+  /**
+   * Generates one content from the given LLM request and tools.
+   *
+   * @param llmRequest The LLM request containing the input prompt and parameters.
+   * @param stream A boolean flag indicating whether to stream the response.
+   * @return A Flowable of LlmResponses. For non-streaming calls, it will only yield one
+   *     LlmResponse. For streaming calls, it may yield more than one LlmResponse, but all yielded
+   *     LlmResponses should be treated as one content by merging their parts.
+   */
+  public abstract Flowable<LlmResponse> generateContent(LlmRequest llmRequest, boolean stream);
 
-	/** Creates a live connection to the LLM. */
-	public abstract BaseLlmConnection connect(LlmRequest llmRequest);
-
+  /** Creates a live connection to the LLM. */
+  public abstract BaseLlmConnection connect(LlmRequest llmRequest);
 }

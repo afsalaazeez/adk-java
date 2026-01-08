@@ -21,6 +21,5 @@ import java.util.List;
 /** An interface that provides examples for a given query. */
 public interface BaseExampleProvider {
 
-	List<Example> getExamples(String query);
-
+  List<Example> getExamples(String query);
 }

@@ -26,110 +26,112 @@ import javax.annotation.Nullable;
 /** Server parameters for Streamable HTTP client transport. */
 public class StreamableHttpServerParameters {
 
-	private final String url;
+  private final String url;
 
-	private final Map<String, String> headers;
+  private final Map<String, String> headers;
 
-	private final Duration timeout;
+  private final Duration timeout;
 
-	private final Duration readTimeout;
+  private final Duration readTimeout;
 
-	private final boolean terminateOnClose;
+  private final boolean terminateOnClose;
 
-	/**
-	 * Server parameters for Streamable HTTP client transport.
-	 * @param url The base URL for the MCP Streamable HTTP server.
-	 * @param headers Optional headers to include in requests.
-	 * @param timeout Timeout for HTTP operations (default: 30 seconds).
-	 * @param readTimeout Timeout for reading data from the streamed http events(default:
-	 * 5 minutes).
-	 * @param terminateOnClose Whether to terminate the session on close (default: true).
-	 */
-	public StreamableHttpServerParameters(String url, Map<String, String> headers, @Nullable Duration timeout,
-			@Nullable Duration readTimeout, @Nullable Boolean terminateOnClose) {
-		Assert.hasText(url, "url must not be empty");
-		this.url = url;
-		this.headers = headers == null ? Collections.emptyMap() : headers;
-		this.timeout = timeout == null ? Duration.ofSeconds(30) : timeout;
-		this.readTimeout = readTimeout == null ? Duration.ofMinutes(5) : readTimeout;
-		this.terminateOnClose = terminateOnClose == null || terminateOnClose;
-	}
+  /**
+   * Server parameters for Streamable HTTP client transport.
+   *
+   * @param url The base URL for the MCP Streamable HTTP server.
+   * @param headers Optional headers to include in requests.
+   * @param timeout Timeout for HTTP operations (default: 30 seconds).
+   * @param readTimeout Timeout for reading data from the streamed http events(default: 5 minutes).
+   * @param terminateOnClose Whether to terminate the session on close (default: true).
+   */
+  public StreamableHttpServerParameters(
+      String url,
+      Map<String, String> headers,
+      @Nullable Duration timeout,
+      @Nullable Duration readTimeout,
+      @Nullable Boolean terminateOnClose) {
+    Assert.hasText(url, "url must not be empty");
+    this.url = url;
+    this.headers = headers == null ? Collections.emptyMap() : headers;
+    this.timeout = timeout == null ? Duration.ofSeconds(30) : timeout;
+    this.readTimeout = readTimeout == null ? Duration.ofMinutes(5) : readTimeout;
+    this.terminateOnClose = terminateOnClose == null || terminateOnClose;
+  }
 
-	public String url() {
-		return url;
-	}
+  public String url() {
+    return url;
+  }
 
-	public Map<String, String> headers() {
-		return headers;
-	}
+  public Map<String, String> headers() {
+    return headers;
+  }
 
-	public Duration timeout() {
-		return timeout;
-	}
+  public Duration timeout() {
+    return timeout;
+  }
 
-	public Duration readTimeout() {
-		return readTimeout;
-	}
+  public Duration readTimeout() {
+    return readTimeout;
+  }
 
-	public boolean terminateOnClose() {
-		return terminateOnClose;
-	}
+  public boolean terminateOnClose() {
+    return terminateOnClose;
+  }
 
-	public static Builder builder() {
-		return new Builder();
-	}
+  public static Builder builder() {
+    return new Builder();
+  }
 
-	/** Builder for {@link StreamableHttpServerParameters}. */
-	public static class Builder {
+  /** Builder for {@link StreamableHttpServerParameters}. */
+  public static class Builder {
 
-		private String url;
+    private String url;
 
-		private Map<String, String> headers = Collections.emptyMap();
+    private Map<String, String> headers = Collections.emptyMap();
 
-		private Duration timeout = Duration.ofSeconds(30);
+    private Duration timeout = Duration.ofSeconds(30);
 
-		private Duration readTimeout = Duration.ofMinutes(5);
+    private Duration readTimeout = Duration.ofMinutes(5);
 
-		private boolean terminateOnClose = true;
+    private boolean terminateOnClose = true;
 
-		protected Builder() {
-		}
+    protected Builder() {}
 
-		@CanIgnoreReturnValue
-		public Builder url(String url) {
-			Assert.hasText(url, "url must not be empty");
-			this.url = url;
-			return this;
-		}
+    @CanIgnoreReturnValue
+    public Builder url(String url) {
+      Assert.hasText(url, "url must not be empty");
+      this.url = url;
+      return this;
+    }
 
-		@CanIgnoreReturnValue
-		public Builder headers(Map<String, String> headers) {
-			this.headers = headers;
-			return this;
-		}
+    @CanIgnoreReturnValue
+    public Builder headers(Map<String, String> headers) {
+      this.headers = headers;
+      return this;
+    }
 
-		@CanIgnoreReturnValue
-		public Builder timeout(Duration timeout) {
-			this.timeout = timeout;
-			return this;
-		}
+    @CanIgnoreReturnValue
+    public Builder timeout(Duration timeout) {
+      this.timeout = timeout;
+      return this;
+    }
 
-		@CanIgnoreReturnValue
-		public Builder readTimeout(Duration readTimeout) {
-			this.readTimeout = readTimeout;
-			return this;
-		}
+    @CanIgnoreReturnValue
+    public Builder readTimeout(Duration readTimeout) {
+      this.readTimeout = readTimeout;
+      return this;
+    }
 
-		@CanIgnoreReturnValue
-		public Builder terminateOnClose(boolean terminateOnClose) {
-			this.terminateOnClose = terminateOnClose;
-			return this;
-		}
+    @CanIgnoreReturnValue
+    public Builder terminateOnClose(boolean terminateOnClose) {
+      this.terminateOnClose = terminateOnClose;
+      return this;
+    }
 
-		public StreamableHttpServerParameters build() {
-			return new StreamableHttpServerParameters(url, headers, timeout, readTimeout, terminateOnClose);
-		}
-
-	}
-
+    public StreamableHttpServerParameters build() {
+      return new StreamableHttpServerParameters(
+          url, headers, timeout, readTimeout, terminateOnClose);
+    }
+  }
 }

@@ -26,24 +26,22 @@ import java.util.List;
 @AutoValue
 public abstract class ListSessionsResponse {
 
-	public abstract ImmutableList<Session> sessions();
+  public abstract ImmutableList<Session> sessions();
 
-	public List<String> sessionIds() {
-		return sessions().stream().map(Session::id).collect(toImmutableList());
-	}
+  public List<String> sessionIds() {
+    return sessions().stream().map(Session::id).collect(toImmutableList());
+  }
 
-	/** Builder for {@link ListSessionsResponse}. */
-	@AutoValue.Builder
-	public abstract static class Builder {
+  /** Builder for {@link ListSessionsResponse}. */
+  @AutoValue.Builder
+  public abstract static class Builder {
 
-		public abstract Builder sessions(List<Session> sessions);
+    public abstract Builder sessions(List<Session> sessions);
 
-		public abstract ListSessionsResponse build();
+    public abstract ListSessionsResponse build();
+  }
 
-	}
-
-	public static Builder builder() {
-		return new AutoValue_ListSessionsResponse.Builder().sessions(ImmutableList.of());
-	}
-
+  public static Builder builder() {
+    return new AutoValue_ListSessionsResponse.Builder().sessions(ImmutableList.of());
+  }
 }

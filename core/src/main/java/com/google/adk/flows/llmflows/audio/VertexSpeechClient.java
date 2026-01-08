@@ -25,37 +25,37 @@ import java.io.IOException;
 /** Implementation of SpeechClientInterface using Vertex AI SpeechClient. */
 public class VertexSpeechClient implements SpeechClientInterface {
 
-	private final SpeechClient speechClient;
+  private final SpeechClient speechClient;
 
-	/**
-	 * Constructs a VertexSpeechClient, initializing the underlying Google Cloud
-	 * SpeechClient.
-	 * @throws IOException if SpeechClient creation fails.
-	 */
-	public VertexSpeechClient() throws IOException {
-		this.speechClient = SpeechClient.create();
-	}
+  /**
+   * Constructs a VertexSpeechClient, initializing the underlying Google Cloud SpeechClient.
+   *
+   * @throws IOException if SpeechClient creation fails.
+   */
+  public VertexSpeechClient() throws IOException {
+    this.speechClient = SpeechClient.create();
+  }
 
-	/**
-	 * Performs synchronous speech recognition on the given audio input.
-	 * @param config Recognition configuration (e.g., language, encoding).
-	 * @param audio Audio data to recognize.
-	 * @return The recognition result.
-	 */
-	@Override
-	public RecognizeResponse recognize(RecognitionConfig config, RecognitionAudio audio) {
-		// The original SpeechClient.recognize doesn't declare checked exceptions other
-		// than what might
-		// be runtime. The interface declares Exception to be more general for other
-		// implementations.
-		return speechClient.recognize(config, audio);
-	}
+  /**
+   * Performs synchronous speech recognition on the given audio input.
+   *
+   * @param config Recognition configuration (e.g., language, encoding).
+   * @param audio Audio data to recognize.
+   * @return The recognition result.
+   */
+  @Override
+  public RecognizeResponse recognize(RecognitionConfig config, RecognitionAudio audio) {
+    // The original SpeechClient.recognize doesn't declare checked exceptions other
+    // than what might
+    // be runtime. The interface declares Exception to be more general for other
+    // implementations.
+    return speechClient.recognize(config, audio);
+  }
 
-	@Override
-	public void close() throws Exception {
-		if (speechClient != null) {
-			speechClient.close();
-		}
-	}
-
+  @Override
+  public void close() throws Exception {
+    if (speechClient != null) {
+      speechClient.close();
+    }
+  }
 }

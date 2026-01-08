@@ -1,0 +1,462 @@
+{
+  "com.google.adk.web" : {
+    "/var/tmp/Roost/RoostGPT/zbio-jan-5/1767874261/source/adk-java/dev/src/main/java/com/google/adk/web/CompiledAgentLoader.java" : {
+      "imports" : [ {
+        "dereferencedParts" : [ ],
+        "name" : "com.google.adk.agents.BaseAgent"
+      }, {
+        "dereferencedParts" : [ {
+          "name" : "AgentLoadingProperties",
+          "comments" : "Properties for loading agents.",
+          "annotations" : [ "@Component", "@ConfigurationProperties(prefix = \"adk.agents\")" ],
+          "methods" : [ {
+            "name" : "getSourceDir",
+            "arguments" : [ ],
+            "accessModifier" : "public",
+            "methodsCalled" : [ ],
+            "usedEntities" : [ "sourceDir" ],
+            "annotations" : [ ],
+            "returnType" : "String",
+            "comments" : null,
+            "methodDefinition" : "public String getSourceDir() {\n    return sourceDir;\n}",
+            "test_exists" : false
+          }, {
+            "name" : "getBuildOutputDirs",
+            "arguments" : [ ],
+            "accessModifier" : "public",
+            "methodsCalled" : [ ],
+            "usedEntities" : [ "buildOutputDirs" ],
+            "annotations" : [ ],
+            "returnType" : "String[]",
+            "comments" : null,
+            "methodDefinition" : "public String[] getBuildOutputDirs() {\n    return buildOutputDirs;\n}",
+            "test_exists" : false
+          } ],
+          "fields" : [ {
+            "name" : "sourceDir",
+            "accessModifier" : "private",
+            "value" : "\".\"",
+            "type" : "String",
+            "comments" : null
+          }, {
+            "name" : "buildOutputDirs",
+            "accessModifier" : "private",
+            "value" : "{ \"target/classes\", \"build/classes/java/main\", \"build/classes\" }",
+            "type" : "String[]",
+            "comments" : null
+          } ],
+          "constructors" : [ ],
+          "extends" : [ ],
+          "implements" : [ ],
+          "nestedClass" : null,
+          "accessSpecifier" : "public",
+          "records" : null,
+          "imports" : [ {
+            "dereferencedParts" : [ ],
+            "name" : "org.springframework.boot.context.properties.ConfigurationProperties"
+          }, {
+            "dereferencedParts" : [ ],
+            "name" : "org.springframework.stereotype.Component"
+          } ]
+        } ],
+        "filePath" : "/var/tmp/Roost/RoostGPT/zbio-jan-5/1767874261/source/adk-java/dev/src/main/java/com/google/adk/web/config/AgentLoadingProperties.java",
+        "name" : "com.google.adk.web.config.AgentLoadingProperties"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "com.google.common.base.Suppliers"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "com.google.common.collect.ImmutableList"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "com.google.common.collect.ImmutableMap"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.io.File"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.io.IOException"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.lang.reflect.Field"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.lang.reflect.Modifier"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.net.URL"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.net.URLClassLoader"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.nio.file.Files"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.nio.file.InvalidPathException"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.nio.file.Path"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.nio.file.Paths"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.util.HashMap"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.util.Map"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.util.NoSuchElementException"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.util.function.Supplier"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.util.stream.Stream"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "javax.annotation.Nonnull"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "javax.annotation.concurrent.ThreadSafe"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "org.slf4j.Logger"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "org.slf4j.LoggerFactory"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "org.springframework.boot.autoconfigure.condition.ConditionalOnProperty"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "org.springframework.context.annotation.Primary"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "org.springframework.stereotype.Service"
+      } ],
+      "classes" : [ {
+        "name" : "CompiledAgentLoader",
+        "comments" : "CompiledAgentLoader implementation for the dev environment.\n\n<p>This loader scans the configured source directory and treats the source directory or a\nsubdirectory as an \"agent unit\" containing pre-compiled classes. It does not perform runtime\ncompilation - agents must be pre-compiled. Agents are identified by a public static field named\n{@code ROOT_AGENT} assignable to {@link BaseAgent}.\n\n<p>Example directory structure for path {@code internal/samples}:\n\n<pre>\nagent/samples/\n  ├── my-chat-agent/\n  │   ├── MyAgent.class (with ROOT_AGENT field)\n  │   └── helper/\n  │       └── HelperClass.class\n  └── code-assistant/\n      ├── CodeAssistant.class (with ROOT_AGENT field)\n      └── tools/\n          └── CodeTools.class\n</pre>\n\n<p>This loader is thread-safe and uses memoized suppliers to ensure agents are created only once\nwhen first requested, improving performance for repeated access.\n\n<p>Configuration:\n\n<ul>\n  <li>To enable this loader: {@code adk.agents.loader=compiled}\n  <li>To specify agent source directory: {@code adk.agents.source-dir=/path/to/agents}\n</ul>",
+        "annotations" : [ "@Service(\"agentLoader\")", "@Primary", "@ConditionalOnProperty(name = \"adk.agents.loader\", havingValue = \"compiled\", matchIfMissing = true)", "@ThreadSafe" ],
+        "methods" : [ {
+          "name" : "loadAgent",
+          "arguments" : [ "String name" ],
+          "accessModifier" : "public",
+          "methodsCalled" : [ {
+            "name" : "isEmpty",
+            "arguments" : [ ],
+            "body" : ""
+          }, {
+            "name" : "trim",
+            "arguments" : [ ],
+            "body" : ""
+          }, {
+            "name" : "get",
+            "arguments" : [ "name" ],
+            "body" : ""
+          }, {
+            "name" : "warn",
+            "arguments" : [ "\"Agent not found: {}. Available agents: {}\"", "name", "agentSuppliers.keySet()" ],
+            "body" : ""
+          }, {
+            "name" : "keySet",
+            "arguments" : [ ],
+            "body" : ""
+          }, {
+            "name" : "get",
+            "arguments" : [ ],
+            "body" : ""
+          }, {
+            "name" : "debug",
+            "arguments" : [ "\"Successfully loaded agent: {}\"", "name" ],
+            "body" : ""
+          }, {
+            "name" : "error",
+            "arguments" : [ "\"Failed to load agent: {}\"", "name", "e" ],
+            "body" : ""
+          } ],
+          "usedEntities" : [ "name", "agentSuppliers", "supplier", "logger", "agent", "e" ],
+          "annotations" : [ "@Override" ],
+          "returnType" : "BaseAgent",
+          "comments" : null,
+          "methodDefinition" : "public BaseAgent loadAgent(String name) {\n    if (name == null || name.trim().isEmpty()) {\n        throw new IllegalArgumentException(\"Agent name cannot be null or empty\");\n    }\n    Supplier<BaseAgent> supplier = agentSuppliers.get(name);\n    if (supplier == null) {\n        logger.warn(\"Agent not found: {}. Available agents: {}\", name, agentSuppliers.keySet());\n        throw new NoSuchElementException(\"Agent not found: \" + name);\n    }\n    try {\n        BaseAgent agent = supplier.get();\n        logger.debug(\"Successfully loaded agent: {}\", name);\n        return agent;\n    } catch (Exception e) {\n        logger.error(\"Failed to load agent: {}\", name, e);\n        throw new IllegalStateException(\"Agent exists but failed to load: \" + name, e);\n    }\n}",
+          "test_exists" : false
+        } ],
+        "fields" : [ {
+          "name" : "logger",
+          "accessModifier" : "private,static,final",
+          "value" : "LoggerFactory.getLogger(CompiledAgentLoader.class)",
+          "type" : "Logger",
+          "comments" : null
+        }, {
+          "name" : "properties",
+          "accessModifier" : "private,final",
+          "value" : null,
+          "type" : "AgentLoadingProperties",
+          "comments" : null
+        }, {
+          "name" : "agentSuppliers",
+          "accessModifier" : "private,final",
+          "value" : null,
+          "type" : "ImmutableMap<String,Supplier<BaseAgent>>",
+          "comments" : null
+        } ],
+        "constructors" : [ {
+          "name" : "CompiledAgentLoader",
+          "arguments" : [ "AgentLoadingProperties properties" ],
+          "accessModifier" : "public",
+          "methodsCalled" : [ {
+            "name" : "info",
+            "arguments" : [ "\"Initializing CompiledAgentLoader for path-based agents\"" ],
+            "body" : ""
+          }, {
+            "name" : "getSourceDir",
+            "arguments" : [ ],
+            "body" : ""
+          }, {
+            "name" : "isEmpty",
+            "arguments" : [ ],
+            "body" : ""
+          }, {
+            "name" : "loadPathBasedAgents",
+            "arguments" : [ "allAgents" ],
+            "body" : "private void loadPathBasedAgents(Map<String, Supplier<BaseAgent>> agents) {\n    Path sourceDir = Paths.get(properties.getSourceDir());\n    if (!Files.isDirectory(sourceDir)) {\n        logger.warn(\"Agent source directory does not exist: {}. Skipping path-based agent loading.\", sourceDir);\n        return;\n    }\n    logger.info(\"Scanning for agent units in: {}\", sourceDir);\n    \n    Path targetClasses = sourceDir.resolve(\"target/classes\");\n    if (Files.exists(targetClasses) && Files.isDirectory(targetClasses)) {\n        logger.info(\"Found Maven project structure, scanning target/classes: {}\", targetClasses);\n        loadAgentsFromDirectory(targetClasses, agents);\n    }\n    \n    try (Stream<Path> entries = Files.list(sourceDir)) {\n        entries.forEach(entry -> {\n            if (Files.isDirectory(entry)) {\n                String agentUnitName = entry.getFileName().toString();\n                \n                if (!\"target\".equals(agentUnitName)) {\n                    loadAgentUnit(entry, agentUnitName, agents);\n                }\n            }\n        });\n    } catch (IOException e) {\n        logger.error(\"IO error loading path-based agents from: {}\", sourceDir, e);\n    } catch (SecurityException e) {\n        logger.error(\"Security error accessing path-based agents from: {}\", sourceDir, e);\n    } catch (InvalidPathException e) {\n        logger.error(\"Invalid path error loading path-based agents from: {}\", sourceDir, e);\n    } catch (Exception e) {\n        logger.error(\"Unexpected error loading path-based agents from: {}\", sourceDir, e);\n    }\n    logger.info(\"Completed path-based agent discovery. Found {} total agents\", agents.size());\n}"
+          }, {
+            "name" : "warn",
+            "arguments" : [ "\"No source directory configured (adk.agents.source-dir). No agents will be available.\"" ],
+            "body" : ""
+          }, {
+            "name" : "copyOf",
+            "arguments" : [ "allAgents" ],
+            "body" : ""
+          }, {
+            "name" : "info",
+            "arguments" : [ "\"CompiledAgentLoader initialized with {} agents: {}\"", "agentSuppliers.size()", "agentSuppliers.keySet()" ],
+            "body" : ""
+          }, {
+            "name" : "size",
+            "arguments" : [ ],
+            "body" : ""
+          }, {
+            "name" : "keySet",
+            "arguments" : [ ],
+            "body" : ""
+          } ],
+          "usedEntities" : [ "properties", "logger", "allAgents", "ImmutableMap", "agentSuppliers" ],
+          "annotations" : [ ],
+          "comments" : null,
+          "methodDefinition" : "public CompiledAgentLoader(AgentLoadingProperties properties) {\n    this.properties = properties;\n    logger.info(\"Initializing CompiledAgentLoader for path-based agents\");\n    Map<String, Supplier<BaseAgent>> allAgents = new HashMap<>();\n    \n    if (properties.getSourceDir() != null && !properties.getSourceDir().isEmpty()) {\n        loadPathBasedAgents(allAgents);\n    } else {\n        logger.warn(\"No source directory configured (adk.agents.source-dir). No agents will be available.\");\n    }\n    this.agentSuppliers = ImmutableMap.copyOf(allAgents);\n    logger.info(\"CompiledAgentLoader initialized with {} agents: {}\", agentSuppliers.size(), agentSuppliers.keySet());\n}"
+        } ],
+        "extends" : [ ],
+        "implements" : [ "AgentLoader" ],
+        "nestedClass" : null,
+        "accessSpecifier" : "public",
+        "records" : [ ]
+      } ],
+      "records" : [ ],
+      "samePackageClasses" : [ {
+        "imports" : [ {
+          "dereferencedParts" : [ ],
+          "name" : "com.google.adk.agents.BaseAgent"
+        }, {
+          "dereferencedParts" : [ ],
+          "name" : "com.google.common.collect.ImmutableList"
+        }, {
+          "dereferencedParts" : [ ],
+          "name" : "javax.annotation.Nonnull"
+        }, {
+          "dereferencedParts" : [ ],
+          "name" : "javax.annotation.concurrent.ThreadSafe"
+        } ],
+        "filePath" : "/var/tmp/Roost/RoostGPT/zbio-jan-5/1767874261/source/adk-java/dev/src/main/java/com/google/adk/web/AgentLoader.java",
+        "classes" : [ {
+          "name" : "AgentLoader",
+          "comments" : "Interface for loading agents to the ADK Web Server.\n\n<p>Users implement this interface to register their agents with ADK Web Server.\n\n<p><strong>Thread Safety:</strong> Implementation must be thread-safe as it will be used as\nSpring singleton beans and accessed concurrently by multiple HTTP requests.\n\n<p>Example usage:\n\n<pre>{@code\npublic class MyAgentLoader implements AgentLoader {",
+          "annotations" : [ "@ThreadSafe" ],
+          "methods" : [ {
+            "name" : "listAgents",
+            "arguments" : [ ],
+            "accessModifier" : "",
+            "methodsCalled" : [ ],
+            "usedEntities" : [ ],
+            "annotations" : [ "@Nonnull" ],
+            "returnType" : "ImmutableList<String>",
+            "comments" : "Returns a list of available agent names.",
+            "methodDefinition" : "ImmutableList<String> listAgents();",
+            "test_exists" : false
+          }, {
+            "name" : "loadAgent",
+            "arguments" : [ "String name" ],
+            "accessModifier" : "",
+            "methodsCalled" : [ ],
+            "usedEntities" : [ ],
+            "annotations" : [ ],
+            "returnType" : "BaseAgent",
+            "comments" : "Loads the BaseAgent instance for the specified agent name.",
+            "methodDefinition" : "BaseAgent loadAgent(String name);",
+            "test_exists" : false
+          } ],
+          "fields" : [ ],
+          "constructors" : [ ],
+          "extends" : [ ],
+          "implements" : [ ],
+          "nestedClass" : null,
+          "accessSpecifier" : "public",
+          "records" : [ ]
+        } ]
+      } ]
+    },
+    "/var/tmp/Roost/RoostGPT/zbio-jan-5/1767874261/source/adk-java/dev/src/main/java/com/google/adk/web/AgentStaticLoader.java" : {
+      "imports" : [ {
+        "dereferencedParts" : [ ],
+        "name" : "com.google.common.collect.ImmutableList.toImmutableList"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "com.google.common.collect.ImmutableMap.toImmutableMap"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.util.Arrays.stream"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.util.function.Function.identity"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "com.google.adk.agents.BaseAgent"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "com.google.common.collect.ImmutableList"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "com.google.common.collect.ImmutableMap"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "java.util.NoSuchElementException"
+      }, {
+        "dereferencedParts" : [ ],
+        "name" : "javax.annotation.Nonnull"
+      } ],
+      "classes" : [ {
+        "name" : "AgentStaticLoader",
+        "comments" : "Static Agent Loader for programmatically provided agents.\n\n<p>This loader takes a static list of pre-created agent instances and makes them available\nthrough the AgentLoader interface. Perfect for cases where you already have agent instances and\njust need a convenient way to wrap them in an AgentLoader.\n\n<p>This class is not a Spring component by itself - instances are created programmatically and\nthen registered as beans via factory methods.",
+        "annotations" : [ ],
+        "methods" : [ {
+          "name" : "loadAgent",
+          "arguments" : [ "String name" ],
+          "accessModifier" : "public",
+          "methodsCalled" : [ {
+            "name" : "isEmpty",
+            "arguments" : [ ],
+            "body" : ""
+          }, {
+            "name" : "trim",
+            "arguments" : [ ],
+            "body" : ""
+          }, {
+            "name" : "get",
+            "arguments" : [ "name" ],
+            "body" : ""
+          } ],
+          "usedEntities" : [ "name", "agents", "agent" ],
+          "annotations" : [ "@Override" ],
+          "returnType" : "BaseAgent",
+          "comments" : null,
+          "methodDefinition" : "public BaseAgent loadAgent(String name) {\n    if (name == null || name.trim().isEmpty()) {\n        throw new IllegalArgumentException(\"Agent name cannot be null or empty\");\n    }\n    BaseAgent agent = agents.get(name);\n    if (agent == null) {\n        throw new NoSuchElementException(\"Agent not found: \" + name);\n    }\n    return agent;\n}",
+          "test_exists" : false
+        } ],
+        "fields" : [ {
+          "name" : "agents",
+          "accessModifier" : "private,final",
+          "value" : null,
+          "type" : "ImmutableMap<String,BaseAgent>",
+          "comments" : null
+        } ],
+        "constructors" : [ {
+          "name" : "AgentStaticLoader",
+          "arguments" : [ "BaseAgent... agents" ],
+          "accessModifier" : "public",
+          "methodsCalled" : [ {
+            "name" : "collect",
+            "arguments" : [ "toImmutableMap(BaseAgent::name, identity())" ],
+            "body" : ""
+          }, {
+            "name" : "stream",
+            "arguments" : [ "agents" ],
+            "body" : ""
+          }, {
+            "name" : "toImmutableMap",
+            "arguments" : [ "BaseAgent::name", "identity()" ],
+            "body" : ""
+          }, {
+            "name" : "identity",
+            "arguments" : [ ],
+            "body" : ""
+          } ],
+          "usedEntities" : [ "agents" ],
+          "annotations" : [ ],
+          "comments" : null,
+          "methodDefinition" : "public AgentStaticLoader(BaseAgent... agents) {\n    this.agents = stream(agents).collect(toImmutableMap(BaseAgent::name, identity()));\n}"
+        } ],
+        "extends" : [ ],
+        "implements" : [ "AgentLoader" ],
+        "nestedClass" : null,
+        "accessSpecifier" : "public",
+        "records" : [ ]
+      } ],
+      "records" : [ ],
+      "samePackageClasses" : [ {
+        "imports" : [ {
+          "dereferencedParts" : [ ],
+          "name" : "com.google.adk.agents.BaseAgent"
+        }, {
+          "dereferencedParts" : [ ],
+          "name" : "com.google.common.collect.ImmutableList"
+        }, {
+          "dereferencedParts" : [ ],
+          "name" : "javax.annotation.Nonnull"
+        }, {
+          "dereferencedParts" : [ ],
+          "name" : "javax.annotation.concurrent.ThreadSafe"
+        } ],
+        "filePath" : "/var/tmp/Roost/RoostGPT/zbio-jan-5/1767874261/source/adk-java/dev/src/main/java/com/google/adk/web/AgentLoader.java",
+        "classes" : [ {
+          "name" : "AgentLoader",
+          "comments" : "Interface for loading agents to the ADK Web Server.\n\n<p>Users implement this interface to register their agents with ADK Web Server.\n\n<p><strong>Thread Safety:</strong> Implementation must be thread-safe as it will be used as\nSpring singleton beans and accessed concurrently by multiple HTTP requests.\n\n<p>Example usage:\n\n<pre>{@code\npublic class MyAgentLoader implements AgentLoader {",
+          "annotations" : [ "@ThreadSafe" ],
+          "methods" : [ {
+            "name" : "listAgents",
+            "arguments" : [ ],
+            "accessModifier" : "",
+            "methodsCalled" : [ ],
+            "usedEntities" : [ ],
+            "annotations" : [ "@Nonnull" ],
+            "returnType" : "ImmutableList<String>",
+            "comments" : "Returns a list of available agent names.",
+            "methodDefinition" : "ImmutableList<String> listAgents();",
+            "test_exists" : false
+          }, {
+            "name" : "loadAgent",
+            "arguments" : [ "String name" ],
+            "accessModifier" : "",
+            "methodsCalled" : [ ],
+            "usedEntities" : [ ],
+            "annotations" : [ ],
+            "returnType" : "BaseAgent",
+            "comments" : "Loads the BaseAgent instance for the specified agent name.",
+            "methodDefinition" : "BaseAgent loadAgent(String name);",
+            "test_exists" : false
+          } ],
+          "fields" : [ ],
+          "constructors" : [ ],
+          "extends" : [ ],
+          "implements" : [ ],
+          "nestedClass" : null,
+          "accessSpecifier" : "public",
+          "records" : [ ]
+        } ]
+      } ]
+    }
+  }
+}

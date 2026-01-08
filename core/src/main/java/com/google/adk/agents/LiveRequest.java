@@ -33,90 +33,89 @@ import javax.annotation.Nullable;
 @JsonDeserialize(builder = LiveRequest.Builder.class)
 public abstract class LiveRequest extends JsonBaseModel {
 
-	LiveRequest() {
-	}
+  LiveRequest() {}
 
-	/**
-	 * Returns the content of the request.
-	 *
-	 * <p>
-	 * If set, send the content to the model in turn-by-turn mode.
-	 * @return An optional {@link Content} object containing the content of the request.
-	 */
-	@JsonProperty("content")
-	public abstract Optional<Content> content();
+  /**
+   * Returns the content of the request.
+   *
+   * <p>If set, send the content to the model in turn-by-turn mode.
+   *
+   * @return An optional {@link Content} object containing the content of the request.
+   */
+  @JsonProperty("content")
+  public abstract Optional<Content> content();
 
-	/**
-	 * Returns the blob of the request.
-	 *
-	 * <p>
-	 * If set, send the blob to the model in realtime mode.
-	 * @return An optional {@link Blob} object containing the blob of the request.
-	 */
-	@JsonProperty("blob")
-	public abstract Optional<Blob> blob();
+  /**
+   * Returns the blob of the request.
+   *
+   * <p>If set, send the blob to the model in realtime mode.
+   *
+   * @return An optional {@link Blob} object containing the blob of the request.
+   */
+  @JsonProperty("blob")
+  public abstract Optional<Blob> blob();
 
-	/**
-	 * Returns whether the connection should be closed.
-	 *
-	 * <p>
-	 * If set to true, the connection will be closed after the request is sent.
-	 * @return A boolean indicating whether the connection should be closed.
-	 */
-	@JsonProperty("close")
-	public abstract Optional<Boolean> close();
+  /**
+   * Returns whether the connection should be closed.
+   *
+   * <p>If set to true, the connection will be closed after the request is sent.
+   *
+   * @return A boolean indicating whether the connection should be closed.
+   */
+  @JsonProperty("close")
+  public abstract Optional<Boolean> close();
 
-	/** Extracts boolean value from the close field or returns false if unset. */
-	public boolean shouldClose() {
-		return close().orElse(false);
-	}
+  /** Extracts boolean value from the close field or returns false if unset. */
+  public boolean shouldClose() {
+    return close().orElse(false);
+  }
 
-	/** Builder for constructing {@link LiveRequest} instances. */
-	@AutoValue.Builder
-	@JsonPOJOBuilder(buildMethodName = "build", withPrefix = "")
-	public abstract static class Builder {
+  /** Builder for constructing {@link LiveRequest} instances. */
+  @AutoValue.Builder
+  @JsonPOJOBuilder(buildMethodName = "build", withPrefix = "")
+  public abstract static class Builder {
 
-		@JsonProperty("content")
-		public abstract Builder content(@Nullable Content content);
+    @JsonProperty("content")
+    public abstract Builder content(@Nullable Content content);
 
-		public abstract Builder content(Optional<Content> content);
+    public abstract Builder content(Optional<Content> content);
 
-		@JsonProperty("blob")
-		public abstract Builder blob(@Nullable Blob blob);
+    @JsonProperty("blob")
+    public abstract Builder blob(@Nullable Blob blob);
 
-		public abstract Builder blob(Optional<Blob> blob);
+    public abstract Builder blob(Optional<Blob> blob);
 
-		@JsonProperty("close")
-		public abstract Builder close(@Nullable Boolean close);
+    @JsonProperty("close")
+    public abstract Builder close(@Nullable Boolean close);
 
-		public abstract Builder close(Optional<Boolean> close);
+    public abstract Builder close(Optional<Boolean> close);
 
-		abstract LiveRequest autoBuild();
+    abstract LiveRequest autoBuild();
 
-		public final LiveRequest build() {
-			LiveRequest request = autoBuild();
-			Preconditions.checkState(
-					request.content().isPresent() || request.blob().isPresent() || request.close().isPresent(),
-					"One of content, blob, or close must be set");
-			return request;
-		}
+    public final LiveRequest build() {
+      LiveRequest request = autoBuild();
+      Preconditions.checkState(
+          request.content().isPresent()
+              || request.blob().isPresent()
+              || request.close().isPresent(),
+          "One of content, blob, or close must be set");
+      return request;
+    }
+  }
 
-	}
+  public static Builder builder() {
+    return new AutoValue_LiveRequest.Builder().close(false);
+  }
 
-	public static Builder builder() {
-		return new AutoValue_LiveRequest.Builder().close(false);
-	}
+  public abstract Builder toBuilder();
 
-	public abstract Builder toBuilder();
+  /** Deserializes a Json string to a {@link LiveRequest} object. */
+  public static LiveRequest fromJsonString(String json) {
+    return JsonBaseModel.fromJsonString(json, LiveRequest.class);
+  }
 
-	/** Deserializes a Json string to a {@link LiveRequest} object. */
-	public static LiveRequest fromJsonString(String json) {
-		return JsonBaseModel.fromJsonString(json, LiveRequest.class);
-	}
-
-	@JsonCreator
-	static LiveRequest.Builder jacksonBuilder() {
-		return LiveRequest.builder();
-	}
-
+  @JsonCreator
+  static LiveRequest.Builder jacksonBuilder() {
+    return LiveRequest.builder();
+  }
 }

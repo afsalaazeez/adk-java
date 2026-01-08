@@ -38,74 +38,67 @@ import org.springframework.web.server.ResponseStatusException;
 /** Service for creating and caching Runner instances. */
 @Component
 public class RunnerService {
-  private static final Logger log = LoggerFactory.getLogger(RunnerService.class);
 
-  private final AgentLoader agentProvider;
-  private final BaseArtifactService artifactService;
-  private final BaseSessionService sessionService;
-  private final BaseMemoryService memoryService;
-  private final List<BasePlugin> extraPlugins;
-  private final Map<String, Runner> runnerCache = new ConcurrentHashMap<>();
+	private static final Logger log = LoggerFactory.getLogger(RunnerService.class);
 
-  public RunnerService(
-      AgentLoader agentProvider,
-      BaseArtifactService artifactService,
-      BaseSessionService sessionService,
-      BaseMemoryService memoryService,
-      @Autowired(required = false) @Qualifier("extraPlugins") List<BasePlugin> extraPlugins) {
-    this.agentProvider = agentProvider;
-    this.artifactService = artifactService;
-    this.sessionService = sessionService;
-    this.memoryService = memoryService;
-    this.extraPlugins =
-        extraPlugins != null ? ImmutableList.copyOf(extraPlugins) : ImmutableList.of();
-  }
+	private final AgentLoader agentProvider;
 
-  /**
-   * Gets the Runner instance for a given application name. Handles potential agent engine ID
-   * overrides.
-   *
-   * @param appName The application name requested by the user.
-   * @return A configured Runner instance.
-   */
-  public Runner getRunner(String appName) {
-    return runnerCache.computeIfAbsent(
-        appName,
-        key -> {
-          try {
-            BaseAgent agent = agentProvider.loadAgent(key);
-            log.info(
-                "RunnerService: Creating Runner for appName: {}, using agent definition: {}",
-                appName,
-                agent.name());
-            return new Runner(
-                agent,
-                appName,
-                this.artifactService,
-                this.sessionService,
-                this.memoryService,
-                this.extraPlugins);
-          } catch (java.util.NoSuchElementException e) {
-            log.error(
-                "Agent/App named '{}' not found in registry. Available apps: {}",
-                key,
-                agentProvider.listAgents());
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Agent/App not found: " + key);
-          } catch (IllegalStateException e) {
-            log.error("Agent '{}' exists but failed to load: {}", key, e.getMessage());
-            throw new ResponseStatusException(
-                HttpStatus.INTERNAL_SERVER_ERROR, "Agent failed to load: " + key, e);
-          }
-        });
-  }
+	private final BaseArtifactService artifactService;
 
-  /** Called by hot loader when agents are updated */
-  public void onAgentUpdated(String agentName) {
-    Runner removed = runnerCache.remove(agentName);
-    if (removed != null) {
-      log.info("Cleared cached Runner for updated agent: {}", agentName);
-    } else {
-      log.debug("No cached Runner found for agent: {}", agentName);
-    }
-  }
+	private final BaseSessionService sessionService;
+
+	private final BaseMemoryService memoryService;
+
+	private final List<BasePlugin> extraPlugins;
+
+	private final Map<String, Runner> runnerCache = new ConcurrentHashMap<>();
+
+	public RunnerService(AgentLoader agentProvider, BaseArtifactService artifactService,
+			BaseSessionService sessionService, BaseMemoryService memoryService,
+			@Autowired(required = false) @Qualifier("extraPlugins") List<BasePlugin> extraPlugins) {
+		this.agentProvider = agentProvider;
+		this.artifactService = artifactService;
+		this.sessionService = sessionService;
+		this.memoryService = memoryService;
+		this.extraPlugins = extraPlugins != null ? ImmutableList.copyOf(extraPlugins) : ImmutableList.of();
+	}
+
+	/**
+	 * Gets the Runner instance for a given application name. Handles potential agent
+	 * engine ID overrides.
+	 * @param appName The application name requested by the user.
+	 * @return A configured Runner instance.
+	 */
+	public Runner getRunner(String appName) {
+		return runnerCache.computeIfAbsent(appName, key -> {
+			try {
+				BaseAgent agent = agentProvider.loadAgent(key);
+				log.info("RunnerService: Creating Runner for appName: {}, using agent definition: {}", appName,
+						agent.name());
+				return new Runner(agent, appName, this.artifactService, this.sessionService, this.memoryService,
+						this.extraPlugins);
+			}
+			catch (java.util.NoSuchElementException e) {
+				log.error("Agent/App named '{}' not found in registry. Available apps: {}", key,
+						agentProvider.listAgents());
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Agent/App not found: " + key);
+			}
+			catch (IllegalStateException e) {
+				log.error("Agent '{}' exists but failed to load: {}", key, e.getMessage());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Agent failed to load: " + key, e);
+			}
+		});
+	}
+
+	/** Called by hot loader when agents are updated */
+	public void onAgentUpdated(String agentName) {
+		Runner removed = runnerCache.remove(agentName);
+		if (removed != null) {
+			log.info("Cleared cached Runner for updated agent: {}", agentName);
+		}
+		else {
+			log.debug("No cached Runner found for agent: {}", agentName);
+		}
+	}
+
 }

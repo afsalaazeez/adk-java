@@ -29,34 +29,32 @@ import com.google.genai.types.ToolCodeExecution;
 /**
  * A code executor that uses the Model's built-in code executor.
  *
- * <p>
- * Currently only supports Gemini 2.0+ models, but will be expanded to other models.
+ * <p>Currently only supports Gemini 2.0+ models, but will be expanded to other models.
  */
 public class BuiltInCodeExecutor extends BaseCodeExecutor {
 
-	@Override
-	public CodeExecutionResult executeCode(InvocationContext invocationContext, CodeExecutionInput codeExecutionInput) {
-		throw new UnsupportedOperationException("Code execution is not supported for built-in code executor.");
-	}
+  @Override
+  public CodeExecutionResult executeCode(
+      InvocationContext invocationContext, CodeExecutionInput codeExecutionInput) {
+    throw new UnsupportedOperationException(
+        "Code execution is not supported for built-in code executor.");
+  }
 
-	/**
-	 * Pre-process the LLM request for Gemini 2.0+ models to use the code execution tool.
-	 */
-	public void processLlmRequest(LlmRequest.Builder llmRequestBuilder) {
-		LlmRequest llmRequest = llmRequestBuilder.build();
-		if (ModelNameUtils.isGemini2Model(llmRequest.model().orElse(null))) {
-			GenerateContentConfig.Builder configBuilder = llmRequest.config()
-				.map(c -> c.toBuilder())
-				.orElse(GenerateContentConfig.builder());
-			ImmutableList.Builder<Tool> toolsBuilder = ImmutableList.<Tool>builder()
-				.addAll(configBuilder.build().tools().orElse(ImmutableList.<Tool>of()));
-			toolsBuilder.add(Tool.builder().codeExecution(ToolCodeExecution.builder().build()).build());
-			configBuilder.tools(toolsBuilder.build());
-			llmRequestBuilder.config(configBuilder.build());
-			return;
-		}
-		throw new IllegalArgumentException(
-				"Gemini code execution tool is not supported for model " + llmRequest.model().orElse(""));
-	}
-
+  /** Pre-process the LLM request for Gemini 2.0+ models to use the code execution tool. */
+  public void processLlmRequest(LlmRequest.Builder llmRequestBuilder) {
+    LlmRequest llmRequest = llmRequestBuilder.build();
+    if (ModelNameUtils.isGemini2Model(llmRequest.model().orElse(null))) {
+      GenerateContentConfig.Builder configBuilder =
+          llmRequest.config().map(c -> c.toBuilder()).orElse(GenerateContentConfig.builder());
+      ImmutableList.Builder<Tool> toolsBuilder =
+          ImmutableList.<Tool>builder()
+              .addAll(configBuilder.build().tools().orElse(ImmutableList.<Tool>of()));
+      toolsBuilder.add(Tool.builder().codeExecution(ToolCodeExecution.builder().build()).build());
+      configBuilder.tools(toolsBuilder.build());
+      llmRequestBuilder.config(configBuilder.build());
+      return;
+    }
+    throw new IllegalArgumentException(
+        "Gemini code execution tool is not supported for model " + llmRequest.model().orElse(""));
+  }
 }

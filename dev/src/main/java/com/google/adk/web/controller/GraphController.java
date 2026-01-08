@@ -45,152 +45,133 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 public class GraphController {
 
-  private static final Logger log = LoggerFactory.getLogger(GraphController.class);
+	private static final Logger log = LoggerFactory.getLogger(GraphController.class);
 
-  private final BaseSessionService sessionService;
-  private final AgentLoader agentProvider;
+	private final BaseSessionService sessionService;
 
-  @Autowired
-  public GraphController(BaseSessionService sessionService, AgentLoader agentProvider) {
-    this.sessionService = sessionService;
-    this.agentProvider = agentProvider;
-  }
+	private final AgentLoader agentProvider;
 
-  /**
-   * Finds a session by its identifiers or throws a ResponseStatusException if not found or if
-   * there's an app/user mismatch.
-   *
-   * @param appName The application name.
-   * @param userId The user ID.
-   * @param sessionId The session ID.
-   * @return The found Session object.
-   * @throws ResponseStatusException with HttpStatus.NOT_FOUND if the session doesn't exist or
-   *     belongs to a different app/user.
-   */
-  private Session findSessionOrThrow(String appName, String userId, String sessionId) {
-    Maybe<Session> maybeSession =
-        sessionService.getSession(appName, userId, sessionId, Optional.empty());
+	@Autowired
+	public GraphController(BaseSessionService sessionService, AgentLoader agentProvider) {
+		this.sessionService = sessionService;
+		this.agentProvider = agentProvider;
+	}
 
-    Session session = maybeSession.blockingGet();
+	/**
+	 * Finds a session by its identifiers or throws a ResponseStatusException if not found
+	 * or if there's an app/user mismatch.
+	 * @param appName The application name.
+	 * @param userId The user ID.
+	 * @param sessionId The session ID.
+	 * @return The found Session object.
+	 * @throws ResponseStatusException with HttpStatus.NOT_FOUND if the session doesn't
+	 * exist or belongs to a different app/user.
+	 */
+	private Session findSessionOrThrow(String appName, String userId, String sessionId) {
+		Maybe<Session> maybeSession = sessionService.getSession(appName, userId, sessionId, Optional.empty());
 
-    if (session == null) {
-      log.warn(
-          "Session not found for appName={}, userId={}, sessionId={}", appName, userId, sessionId);
-      throw new ResponseStatusException(
-          HttpStatus.NOT_FOUND,
-          String.format(
-              "Session not found: appName=%s, userId=%s, sessionId=%s",
-              appName, userId, sessionId));
-    }
+		Session session = maybeSession.blockingGet();
 
-    if (!Objects.equals(session.appName(), appName) || !Objects.equals(session.userId(), userId)) {
-      log.warn(
-          "Session ID {} found but appName/userId mismatch (Expected: {}/{}, Found: {}/{}) -"
-              + " Treating as not found.",
-          sessionId,
-          appName,
-          userId,
-          session.appName(),
-          session.userId());
+		if (session == null) {
+			log.warn("Session not found for appName={}, userId={}, sessionId={}", appName, userId, sessionId);
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String
+				.format("Session not found: appName=%s, userId=%s, sessionId=%s", appName, userId, sessionId));
+		}
 
-      throw new ResponseStatusException(
-          HttpStatus.NOT_FOUND, "Session found but belongs to a different app/user.");
-    }
-    log.debug("Found session: {}", sessionId);
-    return session;
-  }
+		if (!Objects.equals(session.appName(), appName) || !Objects.equals(session.userId(), userId)) {
+			log.warn(
+					"Session ID {} found but appName/userId mismatch (Expected: {}/{}, Found: {}/{}) -"
+							+ " Treating as not found.",
+					sessionId, appName, userId, session.appName(), session.userId());
 
-  /**
-   * Endpoint to get a graph representation of an event (currently returns a placeholder). Requires
-   * Graphviz or similar tooling for full implementation.
-   *
-   * @param appName Application name.
-   * @param userId User ID.
-   * @param sessionId Session ID.
-   * @param eventId Event ID.
-   * @return ResponseEntity containing a GraphResponse with placeholder DOT source.
-   * @throws ResponseStatusException if the session or event is not found.
-   */
-  @GetMapping("/apps/{appName}/users/{userId}/sessions/{sessionId}/events/{eventId}/graph")
-  public ResponseEntity<GraphResponse> getEventGraph(
-      @PathVariable String appName,
-      @PathVariable String userId,
-      @PathVariable String sessionId,
-      @PathVariable String eventId) {
-    log.info(
-        "Request received for GET /apps/{}/users/{}/sessions/{}/events/{}/graph",
-        appName,
-        userId,
-        sessionId,
-        eventId);
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+					"Session found but belongs to a different app/user.");
+		}
+		log.debug("Found session: {}", sessionId);
+		return session;
+	}
 
-    BaseAgent currentAppAgent;
-    try {
-      currentAppAgent = agentProvider.loadAgent(appName);
-    } catch (java.util.NoSuchElementException e) {
-      log.warn("Agent app '{}' not found for graph generation.", appName);
-      return ResponseEntity.status(HttpStatus.NOT_FOUND)
-          .body(new GraphResponse("Agent app not found: " + appName));
-    } catch (IllegalStateException e) {
-      log.warn("Agent app '{}' failed to load for graph generation: {}", appName, e.getMessage());
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body(new GraphResponse("Agent app failed to load: " + appName));
-    }
+	/**
+	 * Endpoint to get a graph representation of an event (currently returns a
+	 * placeholder). Requires Graphviz or similar tooling for full implementation.
+	 * @param appName Application name.
+	 * @param userId User ID.
+	 * @param sessionId Session ID.
+	 * @param eventId Event ID.
+	 * @return ResponseEntity containing a GraphResponse with placeholder DOT source.
+	 * @throws ResponseStatusException if the session or event is not found.
+	 */
+	@GetMapping("/apps/{appName}/users/{userId}/sessions/{sessionId}/events/{eventId}/graph")
+	public ResponseEntity<GraphResponse> getEventGraph(@PathVariable String appName, @PathVariable String userId,
+			@PathVariable String sessionId, @PathVariable String eventId) {
+		log.info("Request received for GET /apps/{}/users/{}/sessions/{}/events/{}/graph", appName, userId, sessionId,
+				eventId);
 
-    Session session = findSessionOrThrow(appName, userId, sessionId);
-    Event event =
-        session.events().stream()
-            .filter(e -> Objects.equals(e.id(), eventId))
-            .findFirst()
-            .orElse(null);
+		BaseAgent currentAppAgent;
+		try {
+			currentAppAgent = agentProvider.loadAgent(appName);
+		}
+		catch (java.util.NoSuchElementException e) {
+			log.warn("Agent app '{}' not found for graph generation.", appName);
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(new GraphResponse("Agent app not found: " + appName));
+		}
+		catch (IllegalStateException e) {
+			log.warn("Agent app '{}' failed to load for graph generation: {}", appName, e.getMessage());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(new GraphResponse("Agent app failed to load: " + appName));
+		}
 
-    if (event == null) {
-      log.warn("Event {} not found in session {}", eventId, sessionId);
-      return ResponseEntity.ok(new GraphResponse(null));
-    }
+		Session session = findSessionOrThrow(appName, userId, sessionId);
+		Event event = session.events().stream().filter(e -> Objects.equals(e.id(), eventId)).findFirst().orElse(null);
 
-    log.debug("Found event {} for graph generation.", eventId);
+		if (event == null) {
+			log.warn("Event {} not found in session {}", eventId, sessionId);
+			return ResponseEntity.ok(new GraphResponse(null));
+		}
 
-    List<List<String>> highlightPairs = new ArrayList<>();
-    String eventAuthor = event.author();
-    List<FunctionCall> functionCalls = event.functionCalls();
-    List<FunctionResponse> functionResponses = event.functionResponses();
+		log.debug("Found event {} for graph generation.", eventId);
 
-    if (!functionCalls.isEmpty()) {
-      log.debug("Processing {} function calls for highlighting.", functionCalls.size());
-      for (FunctionCall fc : functionCalls) {
-        Optional<String> toolName = fc.name();
-        if (toolName.isPresent() && !toolName.get().isEmpty()) {
-          highlightPairs.add(ImmutableList.of(eventAuthor, toolName.get()));
-          log.trace("Adding function call highlight: {} -> {}", eventAuthor, toolName.get());
-        }
-      }
-    } else if (!functionResponses.isEmpty()) {
-      log.debug("Processing {} function responses for highlighting.", functionResponses.size());
-      for (FunctionResponse fr : functionResponses) {
-        Optional<String> toolName = fr.name();
-        if (toolName.isPresent() && !toolName.get().isEmpty()) {
-          highlightPairs.add(ImmutableList.of(toolName.get(), eventAuthor));
-          log.trace("Adding function response highlight: {} -> {}", toolName.get(), eventAuthor);
-        }
-      }
-    } else {
-      log.debug("Processing simple event, highlighting author: {}", eventAuthor);
-      highlightPairs.add(ImmutableList.of(eventAuthor, eventAuthor));
-    }
+		List<List<String>> highlightPairs = new ArrayList<>();
+		String eventAuthor = event.author();
+		List<FunctionCall> functionCalls = event.functionCalls();
+		List<FunctionResponse> functionResponses = event.functionResponses();
 
-    Optional<String> dotSourceOpt =
-        AgentGraphGenerator.getAgentGraphDotSource(currentAppAgent, highlightPairs);
+		if (!functionCalls.isEmpty()) {
+			log.debug("Processing {} function calls for highlighting.", functionCalls.size());
+			for (FunctionCall fc : functionCalls) {
+				Optional<String> toolName = fc.name();
+				if (toolName.isPresent() && !toolName.get().isEmpty()) {
+					highlightPairs.add(ImmutableList.of(eventAuthor, toolName.get()));
+					log.trace("Adding function call highlight: {} -> {}", eventAuthor, toolName.get());
+				}
+			}
+		}
+		else if (!functionResponses.isEmpty()) {
+			log.debug("Processing {} function responses for highlighting.", functionResponses.size());
+			for (FunctionResponse fr : functionResponses) {
+				Optional<String> toolName = fr.name();
+				if (toolName.isPresent() && !toolName.get().isEmpty()) {
+					highlightPairs.add(ImmutableList.of(toolName.get(), eventAuthor));
+					log.trace("Adding function response highlight: {} -> {}", toolName.get(), eventAuthor);
+				}
+			}
+		}
+		else {
+			log.debug("Processing simple event, highlighting author: {}", eventAuthor);
+			highlightPairs.add(ImmutableList.of(eventAuthor, eventAuthor));
+		}
 
-    if (dotSourceOpt.isPresent()) {
-      log.debug("Successfully generated graph DOT source for event {}", eventId);
-      return ResponseEntity.ok(new GraphResponse(dotSourceOpt.get()));
-    } else {
-      log.warn(
-          "Failed to generate graph DOT source for event {} with agent {}",
-          eventId,
-          currentAppAgent.name());
-      return ResponseEntity.ok(new GraphResponse("Could not generate graph for this event."));
-    }
-  }
+		Optional<String> dotSourceOpt = AgentGraphGenerator.getAgentGraphDotSource(currentAppAgent, highlightPairs);
+
+		if (dotSourceOpt.isPresent()) {
+			log.debug("Successfully generated graph DOT source for event {}", eventId);
+			return ResponseEntity.ok(new GraphResponse(dotSourceOpt.get()));
+		}
+		else {
+			log.warn("Failed to generate graph DOT source for event {} with agent {}", eventId, currentAppAgent.name());
+			return ResponseEntity.ok(new GraphResponse("Could not generate graph for this event."));
+		}
+	}
+
 }

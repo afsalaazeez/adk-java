@@ -26,23 +26,26 @@ import java.util.List;
 @JsonDeserialize(builder = AutoValue_Recordings.Builder.class)
 public abstract class Recordings {
 
-  /** Chronological list of all recordings. */
-  public abstract ImmutableList<Recording> recordings();
+	/** Chronological list of all recordings. */
+	public abstract ImmutableList<Recording> recordings();
 
-  public static Builder builder() {
-    return new AutoValue_Recordings.Builder();
-  }
+	public static Builder builder() {
+		return new AutoValue_Recordings.Builder();
+	}
 
-  public static Recordings of(List<Recording> recordings) {
-    return builder().recordings(recordings).build();
-  }
+	public static Recordings of(List<Recording> recordings) {
+		return builder().recordings(recordings).build();
+	}
 
-  /** Builder for Recordings. */
-  @AutoValue.Builder
-  @JsonPOJOBuilder(withPrefix = "")
-  public abstract static class Builder {
-    public abstract Builder recordings(List<Recording> recordings);
+	/** Builder for Recordings. */
+	@AutoValue.Builder
+	@JsonPOJOBuilder(withPrefix = "")
+	public abstract static class Builder {
 
-    public abstract Recordings build();
-  }
+		public abstract Builder recordings(List<Recording> recordings);
+
+		public abstract Recordings build();
+
+	}
+
 }

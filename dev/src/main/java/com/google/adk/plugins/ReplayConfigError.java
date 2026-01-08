@@ -18,11 +18,12 @@ package com.google.adk.plugins;
 /** Exception raised when replay configuration is invalid or missing. */
 public class ReplayConfigError extends RuntimeException {
 
-  public ReplayConfigError(String message) {
-    super(message);
-  }
+	public ReplayConfigError(String message) {
+		super(message);
+	}
 
-  public ReplayConfigError(String message, Throwable cause) {
-    super(message, cause);
-  }
+	public ReplayConfigError(String message, Throwable cause) {
+		super(message, cause);
+	}
+
 }

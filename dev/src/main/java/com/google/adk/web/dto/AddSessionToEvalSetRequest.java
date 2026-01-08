@@ -19,30 +19,33 @@ package com.google.adk.web.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * DTO for POST /apps/{appName}/eval_sets/{evalSetId}/add-session requests. Contains information to
- * associate a session with an evaluation set.
+ * DTO for POST /apps/{appName}/eval_sets/{evalSetId}/add-session requests. Contains
+ * information to associate a session with an evaluation set.
  */
 public class AddSessionToEvalSetRequest {
-  @JsonProperty("evalId")
-  public String evalId;
 
-  @JsonProperty("sessionId")
-  public String sessionId;
+	@JsonProperty("evalId")
+	public String evalId;
 
-  @JsonProperty("userId")
-  public String userId;
+	@JsonProperty("sessionId")
+	public String sessionId;
 
-  public AddSessionToEvalSetRequest() {}
+	@JsonProperty("userId")
+	public String userId;
 
-  public String getEvalId() {
-    return evalId;
-  }
+	public AddSessionToEvalSetRequest() {
+	}
 
-  public String getSessionId() {
-    return sessionId;
-  }
+	public String getEvalId() {
+		return evalId;
+	}
 
-  public String getUserId() {
-    return userId;
-  }
+	public String getSessionId() {
+		return sessionId;
+	}
+
+	public String getUserId() {
+		return userId;
+	}
+
 }

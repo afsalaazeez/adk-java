@@ -22,58 +22,61 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Data Transfer Object (DTO) for POST /run and POST /run-sse requests. Contains information needed
- * to execute an agent run.
+ * Data Transfer Object (DTO) for POST /run and POST /run-sse requests. Contains
+ * information needed to execute an agent run.
  */
 public class AgentRunRequest {
-  @JsonProperty("appName")
-  public String appName;
 
-  @JsonProperty("userId")
-  public String userId;
+	@JsonProperty("appName")
+	public String appName;
 
-  @JsonProperty("sessionId")
-  public String sessionId;
+	@JsonProperty("userId")
+	public String userId;
 
-  @JsonProperty("newMessage")
-  public Content newMessage;
+	@JsonProperty("sessionId")
+	public String sessionId;
 
-  @JsonProperty("streaming")
-  public boolean streaming = false;
+	@JsonProperty("newMessage")
+	public Content newMessage;
 
-  /**
-   * Optional state delta to merge into the session state before running the agent. This allows
-   * updating session state dynamically per request, useful for injecting configuration (e.g.,
-   * replay mode settings) without modifying the stored session.
-   */
-  @JsonProperty("stateDelta")
-  @Nullable
-  public Map<String, Object> stateDelta;
+	@JsonProperty("streaming")
+	public boolean streaming = false;
 
-  public AgentRunRequest() {}
+	/**
+	 * Optional state delta to merge into the session state before running the agent. This
+	 * allows updating session state dynamically per request, useful for injecting
+	 * configuration (e.g., replay mode settings) without modifying the stored session.
+	 */
+	@JsonProperty("stateDelta")
+	@Nullable
+	public Map<String, Object> stateDelta;
 
-  public String getAppName() {
-    return appName;
-  }
+	public AgentRunRequest() {
+	}
 
-  public String getUserId() {
-    return userId;
-  }
+	public String getAppName() {
+		return appName;
+	}
 
-  public String getSessionId() {
-    return sessionId;
-  }
+	public String getUserId() {
+		return userId;
+	}
 
-  public Content getNewMessage() {
-    return newMessage;
-  }
+	public String getSessionId() {
+		return sessionId;
+	}
 
-  public boolean getStreaming() {
-    return streaming;
-  }
+	public Content getNewMessage() {
+		return newMessage;
+	}
 
-  @Nullable
-  public Map<String, Object> getStateDelta() {
-    return stateDelta;
-  }
+	public boolean getStreaming() {
+		return streaming;
+	}
+
+	@Nullable
+	public Map<String, Object> getStateDelta() {
+		return stateDelta;
+	}
+
 }

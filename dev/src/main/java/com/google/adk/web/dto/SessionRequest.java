@@ -23,17 +23,20 @@ import java.util.Map;
 
 /**
  * Data Transfer Object (DTO) for POST /apps/{appName}/users/{userId}/sessions and POST
- * /apps/{appName}/users/{userId}/sessions/{sessionId} equests. Contains information for a session.
+ * /apps/{appName}/users/{userId}/sessions/{sessionId} equests. Contains information for a
+ * session.
  */
 public final class SessionRequest {
-  private final ImmutableMap<String, Object> state;
 
-  @JsonCreator
-  public SessionRequest(@JsonProperty("state") Map<String, Object> state) {
-    this.state = (state == null) ? ImmutableMap.of() : ImmutableMap.copyOf(state);
-  }
+	private final ImmutableMap<String, Object> state;
 
-  public ImmutableMap<String, Object> getState() {
-    return state;
-  }
+	@JsonCreator
+	public SessionRequest(@JsonProperty("state") Map<String, Object> state) {
+		this.state = (state == null) ? ImmutableMap.of() : ImmutableMap.copyOf(state);
+	}
+
+	public ImmutableMap<String, Object> getState() {
+		return state;
+	}
+
 }

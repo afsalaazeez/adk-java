@@ -39,556 +39,630 @@ import javax.annotation.Nullable;
 /** The context for an agent invocation. */
 public class InvocationContext {
 
-	private final BaseSessionService sessionService;
-
-	private final BaseArtifactService artifactService;
-
-	private final BaseMemoryService memoryService;
-
-	private final PluginManager pluginManager;
-
-	private final Optional<LiveRequestQueue> liveRequestQueue;
-
-	private final Map<String, ActiveStreamingTool> activeStreamingTools = new ConcurrentHashMap<>();
-
-	private final String invocationId;
-
-	private final Session session;
-
-	private final Optional<Content> userContent;
-
-	private final RunConfig runConfig;
-
-	private final ResumabilityConfig resumabilityConfig;
-
-	private final InvocationCostManager invocationCostManager = new InvocationCostManager();
-
-	private Optional<String> branch;
-
-	private BaseAgent agent;
-
-	private boolean endInvocation;
-
-	private InvocationContext(Builder builder) {
-		this.sessionService = builder.sessionService;
-		this.artifactService = builder.artifactService;
-		this.memoryService = builder.memoryService;
-		this.pluginManager = builder.pluginManager;
-		this.liveRequestQueue = builder.liveRequestQueue;
-		this.branch = builder.branch;
-		this.invocationId = builder.invocationId;
-		this.agent = builder.agent;
-		this.session = builder.session;
-		this.userContent = builder.userContent;
-		this.runConfig = builder.runConfig;
-		this.endInvocation = builder.endInvocation;
-		this.resumabilityConfig = builder.resumabilityConfig;
-	}
-
-	/**
-	 * @deprecated Use {@link #builder()} instead.
-	 */
-	@Deprecated(forRemoval = true)
-	public InvocationContext(BaseSessionService sessionService, BaseArtifactService artifactService,
-			BaseMemoryService memoryService, PluginManager pluginManager, Optional<LiveRequestQueue> liveRequestQueue,
-			Optional<String> branch, String invocationId, BaseAgent agent, Session session,
-			Optional<Content> userContent, RunConfig runConfig, boolean endInvocation) {
-		this(builder().sessionService(sessionService)
-			.artifactService(artifactService)
-			.memoryService(memoryService)
-			.pluginManager(pluginManager)
-			.liveRequestQueue(liveRequestQueue)
-			.branch(branch)
-			.invocationId(invocationId)
-			.agent(agent)
-			.session(session)
-			.userContent(userContent)
-			.runConfig(runConfig)
-			.endInvocation(endInvocation));
-	}
-
-	/**
-	 * @deprecated Use {@link #builder()} instead.
-	 */
-	@Deprecated(forRemoval = true)
-	public InvocationContext(BaseSessionService sessionService, BaseArtifactService artifactService,
-			BaseMemoryService memoryService, Optional<LiveRequestQueue> liveRequestQueue, Optional<String> branch,
-			String invocationId, BaseAgent agent, Session session, Optional<Content> userContent, RunConfig runConfig,
-			boolean endInvocation) {
-		this(builder().sessionService(sessionService)
-			.artifactService(artifactService)
-			.memoryService(memoryService)
-			.liveRequestQueue(liveRequestQueue)
-			.branch(branch)
-			.invocationId(invocationId)
-			.agent(agent)
-			.session(session)
-			.userContent(userContent)
-			.runConfig(runConfig)
-			.endInvocation(endInvocation));
-	}
-
-	/**
-	 * @deprecated Use {@link #builder()} instead.
-	 */
-	@InlineMe(replacement = "InvocationContext.builder()" + ".sessionService(sessionService)"
-			+ ".artifactService(artifactService)" + ".invocationId(invocationId)" + ".agent(agent)"
-			+ ".session(session)" + ".userContent(Optional.ofNullable(userContent))" + ".runConfig(runConfig)"
-			+ ".build()", imports = { "com.google.adk.agents.InvocationContext", "java.util.Optional" })
-	@Deprecated(forRemoval = true)
-	public static InvocationContext create(BaseSessionService sessionService, BaseArtifactService artifactService,
-			String invocationId, BaseAgent agent, Session session, Content userContent, RunConfig runConfig) {
-		return builder().sessionService(sessionService)
-			.artifactService(artifactService)
-			.invocationId(invocationId)
-			.agent(agent)
-			.session(session)
-			.userContent(Optional.ofNullable(userContent))
-			.runConfig(runConfig)
-			.build();
-	}
-
-	/**
-	 * @deprecated Use {@link #builder()} instead.
-	 */
-	@Deprecated(forRemoval = true)
-	public static InvocationContext create(BaseSessionService sessionService, BaseArtifactService artifactService,
-			BaseAgent agent, Session session, LiveRequestQueue liveRequestQueue, RunConfig runConfig) {
-		return builder().sessionService(sessionService)
-			.artifactService(artifactService)
-			.agent(agent)
-			.session(session)
-			.liveRequestQueue(Optional.ofNullable(liveRequestQueue))
-			.runConfig(runConfig)
-			.build();
-	}
-
-	/** Returns a new {@link Builder} for creating {@link InvocationContext} instances. */
-	public static Builder builder() {
-		return new Builder();
-	}
-
-	/** Creates a shallow copy of the given {@link InvocationContext}. */
-	public static InvocationContext copyOf(InvocationContext other) {
-		InvocationContext newContext = builder().sessionService(other.sessionService)
-			.artifactService(other.artifactService)
-			.memoryService(other.memoryService)
-			.pluginManager(other.pluginManager)
-			.liveRequestQueue(other.liveRequestQueue)
-			.branch(other.branch)
-			.invocationId(other.invocationId)
-			.agent(other.agent)
-			.session(other.session)
-			.userContent(other.userContent)
-			.runConfig(other.runConfig)
-			.endInvocation(other.endInvocation)
-			.resumabilityConfig(other.resumabilityConfig)
-			.build();
-		newContext.activeStreamingTools.putAll(other.activeStreamingTools);
-		return newContext;
-	}
-
-	/** Returns the session service for managing session state. */
-	public BaseSessionService sessionService() {
-		return sessionService;
-	}
-
-	/** Returns the artifact service for persisting artifacts. */
-	public BaseArtifactService artifactService() {
-		return artifactService;
-	}
-
-	/** Returns the memory service for accessing agent memory. */
-	public BaseMemoryService memoryService() {
-		return memoryService;
-	}
-
-	/** Returns the plugin manager for accessing tools and plugins. */
-	public PluginManager pluginManager() {
-		return pluginManager;
-	}
-
-	/**
-	 * Returns a map of tool call IDs to active streaming tools for the current
-	 * invocation.
-	 */
-	public Map<String, ActiveStreamingTool> activeStreamingTools() {
-		return activeStreamingTools;
-	}
-
-	/** Returns the queue for managing live requests, if available for this invocation. */
-	public Optional<LiveRequestQueue> liveRequestQueue() {
-		return liveRequestQueue;
-	}
-
-	/** Returns the unique ID for this invocation. */
-	public String invocationId() {
-		return invocationId;
-	}
-
-	/**
-	 * Sets the [branch] ID for the current invocation. A branch represents a fork in the
-	 * conversation history.
-	 */
-	public void branch(@Nullable String branch) {
-		this.branch = Optional.ofNullable(branch);
-	}
-
-	/**
-	 * Returns the branch ID for the current invocation, if one is set. A branch
-	 * represents a fork in the conversation history.
-	 */
-	public Optional<String> branch() {
-		return branch;
-	}
-
-	/** Returns the agent being invoked. */
-	public BaseAgent agent() {
-		return agent;
-	}
-
-	/** Sets the [agent] being invoked. This is useful when delegating to a sub-agent. */
-	public void agent(BaseAgent agent) {
-		this.agent = agent;
-	}
-
-	/** Returns the session associated with this invocation. */
-	public Session session() {
-		return session;
-	}
-
-	/** Returns the user content that triggered this invocation, if any. */
-	public Optional<Content> userContent() {
-		return userContent;
-	}
-
-	/** Returns the configuration for the current agent run. */
-	public RunConfig runConfig() {
-		return runConfig;
-	}
-
-	/**
-	 * Returns whether this invocation should be ended, e.g., due to reaching a terminal
-	 * state or error.
-	 */
-	public boolean endInvocation() {
-		return endInvocation;
-	}
-
-	/** Sets whether this invocation should be ended. */
-	public void setEndInvocation(boolean endInvocation) {
-		this.endInvocation = endInvocation;
-	}
-
-	/** Returns the application name associated with the session. */
-	public String appName() {
-		return session.appName();
-	}
-
-	/** Returns the user ID associated with the session. */
-	public String userId() {
-		return session.userId();
-	}
-
-	/** Generates a new unique ID for an invocation context. */
-	public static String newInvocationContextId() {
-		return "e-" + UUID.randomUUID();
-	}
-
-	/**
-	 * Increments the count of LLM calls made during this invocation and throws an
-	 * exception if the limit defined in {@link RunConfig} is exceeded.
-	 * @throws LlmCallsLimitExceededException if the call limit is exceeded
-	 */
-	public void incrementLlmCallsCount() throws LlmCallsLimitExceededException {
-		this.invocationCostManager.incrementAndEnforceLlmCallsLimit(this.runConfig);
-	}
-
-	/** Returns whether the current invocation is resumable. */
-	public boolean isResumable() {
-		return resumabilityConfig.isResumable();
-	}
-
-	/** Returns whether to pause the invocation right after this [event]. */
-	public boolean shouldPauseInvocation(Event event) {
-		if (!isResumable()) {
-			return false;
-		}
-
-		var longRunningToolIds = event.longRunningToolIds().orElse(ImmutableSet.of());
-		if (longRunningToolIds.isEmpty()) {
-			return false;
-		}
-
-		return event.functionCalls()
-			.stream()
-			.map(FunctionCall::id)
-			.flatMap(Optional::stream)
-			.anyMatch(functionCallId -> longRunningToolIds.contains(functionCallId));
-	}
-
-	private static class InvocationCostManager {
-
-		private int numberOfLlmCalls = 0;
-
-		void incrementAndEnforceLlmCallsLimit(RunConfig runConfig) throws LlmCallsLimitExceededException {
-			this.numberOfLlmCalls++;
-
-			if (runConfig != null && runConfig.maxLlmCalls() > 0 && this.numberOfLlmCalls > runConfig.maxLlmCalls()) {
-				throw new LlmCallsLimitExceededException(
-						"Max number of llm calls limit of " + runConfig.maxLlmCalls() + " exceeded");
-			}
-		}
-
-	}
-
-	/** Builder for {@link InvocationContext}. */
-	public static class Builder {
-
-		private BaseSessionService sessionService;
-
-		private BaseArtifactService artifactService;
-
-		private BaseMemoryService memoryService;
-
-		private PluginManager pluginManager = new PluginManager();
-
-		private Optional<LiveRequestQueue> liveRequestQueue = Optional.empty();
-
-		private Optional<String> branch = Optional.empty();
-
-		private String invocationId = newInvocationContextId();
-
-		private BaseAgent agent;
-
-		private Session session;
-
-		private Optional<Content> userContent = Optional.empty();
-
-		private RunConfig runConfig = RunConfig.builder().build();
-
-		private boolean endInvocation = false;
-
-		private ResumabilityConfig resumabilityConfig = new ResumabilityConfig();
-
-		/**
-		 * Sets the session service for managing session state.
-		 * @param sessionService the session service to use; required.
-		 * @return this builder instance for chaining.
-		 */
-		@CanIgnoreReturnValue
-		public Builder sessionService(BaseSessionService sessionService) {
-			this.sessionService = sessionService;
-			return this;
-		}
-
-		/**
-		 * Sets the artifact service for persisting artifacts.
-		 * @param artifactService the artifact service to use; required.
-		 * @return this builder instance for chaining.
-		 */
-		@CanIgnoreReturnValue
-		public Builder artifactService(BaseArtifactService artifactService) {
-			this.artifactService = artifactService;
-			return this;
-		}
-
-		/**
-		 * Sets the memory service for accessing agent memory.
-		 * @param memoryService the memory service to use.
-		 * @return this builder instance for chaining.
-		 */
-		@CanIgnoreReturnValue
-		public Builder memoryService(BaseMemoryService memoryService) {
-			this.memoryService = memoryService;
-			return this;
-		}
-
-		/**
-		 * Sets the plugin manager for accessing tools and plugins.
-		 * @param pluginManager the plugin manager to use.
-		 * @return this builder instance for chaining.
-		 */
-		@CanIgnoreReturnValue
-		public Builder pluginManager(PluginManager pluginManager) {
-			this.pluginManager = pluginManager;
-			return this;
-		}
-
-		/**
-		 * Sets the queue for managing live requests.
-		 * @param liveRequestQueue the queue for managing live requests.
-		 * @return this builder instance for chaining.
-		 * @deprecated Use {@link #liveRequestQueue(LiveRequestQueue)} instead.
-		 */
-		// TODO: b/462140921 - Builders should not accept Optional parameters.
-		@Deprecated(forRemoval = true)
-		@CanIgnoreReturnValue
-		public Builder liveRequestQueue(Optional<LiveRequestQueue> liveRequestQueue) {
-			this.liveRequestQueue = liveRequestQueue;
-			return this;
-		}
-
-		/**
-		 * Sets the queue for managing live requests.
-		 * @param liveRequestQueue the queue for managing live requests.
-		 * @return this builder instance for chaining.
-		 */
-		@CanIgnoreReturnValue
-		public Builder liveRequestQueue(LiveRequestQueue liveRequestQueue) {
-			this.liveRequestQueue = Optional.of(liveRequestQueue);
-			return this;
-		}
-
-		/**
-		 * Sets the branch ID for the invocation.
-		 * @param branch the branch ID for the invocation.
-		 * @return this builder instance for chaining.
-		 * @deprecated Use {@link #branch(String)} instead.
-		 */
-		// TODO: b/462140921 - Builders should not accept Optional parameters.
-		@Deprecated(forRemoval = true)
-		@CanIgnoreReturnValue
-		public Builder branch(Optional<String> branch) {
-			this.branch = branch;
-			return this;
-		}
-
-		/**
-		 * Sets the branch ID for the invocation.
-		 * @param branch the branch ID for the invocation.
-		 * @return this builder instance for chaining.
-		 */
-		@CanIgnoreReturnValue
-		public Builder branch(String branch) {
-			this.branch = Optional.of(branch);
-			return this;
-		}
-
-		/**
-		 * Sets the unique ID for the invocation.
-		 * @param invocationId the unique ID for the invocation.
-		 * @return this builder instance for chaining.
-		 */
-		@CanIgnoreReturnValue
-		public Builder invocationId(String invocationId) {
-			this.invocationId = invocationId;
-			return this;
-		}
-
-		/**
-		 * Sets the agent being invoked.
-		 * @param agent the agent being invoked; required.
-		 * @return this builder instance for chaining.
-		 */
-		@CanIgnoreReturnValue
-		public Builder agent(BaseAgent agent) {
-			this.agent = agent;
-			return this;
-		}
-
-		/**
-		 * Sets the session associated with this invocation.
-		 * @param session the session associated with this invocation; required.
-		 * @return this builder instance for chaining.
-		 */
-		@CanIgnoreReturnValue
-		public Builder session(Session session) {
-			this.session = session;
-			return this;
-		}
-
-		/**
-		 * Sets the user content that triggered this invocation.
-		 * @param userContent the user content that triggered this invocation.
-		 * @return this builder instance for chaining.
-		 */
-		@CanIgnoreReturnValue
-		public Builder userContent(Optional<Content> userContent) {
-			this.userContent = userContent;
-			return this;
-		}
-
-		/**
-		 * Sets the user content that triggered this invocation.
-		 * @param userContent the user content that triggered this invocation.
-		 * @return this builder instance for chaining.
-		 */
-		@CanIgnoreReturnValue
-		public Builder userContent(Content userContent) {
-			this.userContent = Optional.of(userContent);
-			return this;
-		}
-
-		/**
-		 * Sets the configuration for the current agent run.
-		 * @param runConfig the configuration for the current agent run.
-		 * @return this builder instance for chaining.
-		 */
-		@CanIgnoreReturnValue
-		public Builder runConfig(RunConfig runConfig) {
-			this.runConfig = runConfig;
-			return this;
-		}
-
-		/**
-		 * Sets whether this invocation should be ended.
-		 * @param endInvocation whether this invocation should be ended.
-		 * @return this builder instance for chaining.
-		 */
-		@CanIgnoreReturnValue
-		public Builder endInvocation(boolean endInvocation) {
-			this.endInvocation = endInvocation;
-			return this;
-		}
-
-		/**
-		 * Sets the resumability configuration for the current agent run.
-		 * @param resumabilityConfig the resumability configuration.
-		 * @return this builder instance for chaining.
-		 */
-		@CanIgnoreReturnValue
-		public Builder resumabilityConfig(ResumabilityConfig resumabilityConfig) {
-			this.resumabilityConfig = resumabilityConfig;
-			return this;
-		}
-
-		/**
-		 * Builds the {@link InvocationContext} instance.
-		 * @throws IllegalStateException if any required parameters are missing.
-		 */
-		// TODO: b/462183912 - Add validation for required parameters.
-		public InvocationContext build() {
-			return new InvocationContext(this);
-		}
-
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (!(o instanceof InvocationContext that)) {
-			return false;
-		}
-		return endInvocation == that.endInvocation && Objects.equals(sessionService, that.sessionService)
-				&& Objects.equals(artifactService, that.artifactService)
-				&& Objects.equals(memoryService, that.memoryService)
-				&& Objects.equals(pluginManager, that.pluginManager)
-				&& Objects.equals(liveRequestQueue, that.liveRequestQueue)
-				&& Objects.equals(activeStreamingTools, that.activeStreamingTools)
-				&& Objects.equals(branch, that.branch) && Objects.equals(invocationId, that.invocationId)
-				&& Objects.equals(agent, that.agent) && Objects.equals(session, that.session)
-				&& Objects.equals(userContent, that.userContent) && Objects.equals(runConfig, that.runConfig)
-				&& Objects.equals(resumabilityConfig, that.resumabilityConfig);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(sessionService, artifactService, memoryService, pluginManager, liveRequestQueue,
-				activeStreamingTools, branch, invocationId, agent, session, userContent, runConfig, endInvocation,
-				resumabilityConfig);
-	}
-
+  private final BaseSessionService sessionService;
+
+  private final BaseArtifactService artifactService;
+
+  private final BaseMemoryService memoryService;
+
+  private final PluginManager pluginManager;
+
+  private final Optional<LiveRequestQueue> liveRequestQueue;
+
+  private final Map<String, ActiveStreamingTool> activeStreamingTools = new ConcurrentHashMap<>();
+
+  private final String invocationId;
+
+  private final Session session;
+
+  private final Optional<Content> userContent;
+
+  private final RunConfig runConfig;
+
+  private final ResumabilityConfig resumabilityConfig;
+
+  private final InvocationCostManager invocationCostManager = new InvocationCostManager();
+
+  private Optional<String> branch;
+
+  private BaseAgent agent;
+
+  private boolean endInvocation;
+
+  private InvocationContext(Builder builder) {
+    this.sessionService = builder.sessionService;
+    this.artifactService = builder.artifactService;
+    this.memoryService = builder.memoryService;
+    this.pluginManager = builder.pluginManager;
+    this.liveRequestQueue = builder.liveRequestQueue;
+    this.branch = builder.branch;
+    this.invocationId = builder.invocationId;
+    this.agent = builder.agent;
+    this.session = builder.session;
+    this.userContent = builder.userContent;
+    this.runConfig = builder.runConfig;
+    this.endInvocation = builder.endInvocation;
+    this.resumabilityConfig = builder.resumabilityConfig;
+  }
+
+  /**
+   * @deprecated Use {@link #builder()} instead.
+   */
+  @Deprecated(forRemoval = true)
+  public InvocationContext(
+      BaseSessionService sessionService,
+      BaseArtifactService artifactService,
+      BaseMemoryService memoryService,
+      PluginManager pluginManager,
+      Optional<LiveRequestQueue> liveRequestQueue,
+      Optional<String> branch,
+      String invocationId,
+      BaseAgent agent,
+      Session session,
+      Optional<Content> userContent,
+      RunConfig runConfig,
+      boolean endInvocation) {
+    this(
+        builder()
+            .sessionService(sessionService)
+            .artifactService(artifactService)
+            .memoryService(memoryService)
+            .pluginManager(pluginManager)
+            .liveRequestQueue(liveRequestQueue)
+            .branch(branch)
+            .invocationId(invocationId)
+            .agent(agent)
+            .session(session)
+            .userContent(userContent)
+            .runConfig(runConfig)
+            .endInvocation(endInvocation));
+  }
+
+  /**
+   * @deprecated Use {@link #builder()} instead.
+   */
+  @Deprecated(forRemoval = true)
+  public InvocationContext(
+      BaseSessionService sessionService,
+      BaseArtifactService artifactService,
+      BaseMemoryService memoryService,
+      Optional<LiveRequestQueue> liveRequestQueue,
+      Optional<String> branch,
+      String invocationId,
+      BaseAgent agent,
+      Session session,
+      Optional<Content> userContent,
+      RunConfig runConfig,
+      boolean endInvocation) {
+    this(
+        builder()
+            .sessionService(sessionService)
+            .artifactService(artifactService)
+            .memoryService(memoryService)
+            .liveRequestQueue(liveRequestQueue)
+            .branch(branch)
+            .invocationId(invocationId)
+            .agent(agent)
+            .session(session)
+            .userContent(userContent)
+            .runConfig(runConfig)
+            .endInvocation(endInvocation));
+  }
+
+  /**
+   * @deprecated Use {@link #builder()} instead.
+   */
+  @InlineMe(
+      replacement =
+          "InvocationContext.builder()"
+              + ".sessionService(sessionService)"
+              + ".artifactService(artifactService)"
+              + ".invocationId(invocationId)"
+              + ".agent(agent)"
+              + ".session(session)"
+              + ".userContent(Optional.ofNullable(userContent))"
+              + ".runConfig(runConfig)"
+              + ".build()",
+      imports = {"com.google.adk.agents.InvocationContext", "java.util.Optional"})
+  @Deprecated(forRemoval = true)
+  public static InvocationContext create(
+      BaseSessionService sessionService,
+      BaseArtifactService artifactService,
+      String invocationId,
+      BaseAgent agent,
+      Session session,
+      Content userContent,
+      RunConfig runConfig) {
+    return builder()
+        .sessionService(sessionService)
+        .artifactService(artifactService)
+        .invocationId(invocationId)
+        .agent(agent)
+        .session(session)
+        .userContent(Optional.ofNullable(userContent))
+        .runConfig(runConfig)
+        .build();
+  }
+
+  /**
+   * @deprecated Use {@link #builder()} instead.
+   */
+  @Deprecated(forRemoval = true)
+  public static InvocationContext create(
+      BaseSessionService sessionService,
+      BaseArtifactService artifactService,
+      BaseAgent agent,
+      Session session,
+      LiveRequestQueue liveRequestQueue,
+      RunConfig runConfig) {
+    return builder()
+        .sessionService(sessionService)
+        .artifactService(artifactService)
+        .agent(agent)
+        .session(session)
+        .liveRequestQueue(Optional.ofNullable(liveRequestQueue))
+        .runConfig(runConfig)
+        .build();
+  }
+
+  /** Returns a new {@link Builder} for creating {@link InvocationContext} instances. */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /** Creates a shallow copy of the given {@link InvocationContext}. */
+  public static InvocationContext copyOf(InvocationContext other) {
+    InvocationContext newContext =
+        builder()
+            .sessionService(other.sessionService)
+            .artifactService(other.artifactService)
+            .memoryService(other.memoryService)
+            .pluginManager(other.pluginManager)
+            .liveRequestQueue(other.liveRequestQueue)
+            .branch(other.branch)
+            .invocationId(other.invocationId)
+            .agent(other.agent)
+            .session(other.session)
+            .userContent(other.userContent)
+            .runConfig(other.runConfig)
+            .endInvocation(other.endInvocation)
+            .resumabilityConfig(other.resumabilityConfig)
+            .build();
+    newContext.activeStreamingTools.putAll(other.activeStreamingTools);
+    return newContext;
+  }
+
+  /** Returns the session service for managing session state. */
+  public BaseSessionService sessionService() {
+    return sessionService;
+  }
+
+  /** Returns the artifact service for persisting artifacts. */
+  public BaseArtifactService artifactService() {
+    return artifactService;
+  }
+
+  /** Returns the memory service for accessing agent memory. */
+  public BaseMemoryService memoryService() {
+    return memoryService;
+  }
+
+  /** Returns the plugin manager for accessing tools and plugins. */
+  public PluginManager pluginManager() {
+    return pluginManager;
+  }
+
+  /** Returns a map of tool call IDs to active streaming tools for the current invocation. */
+  public Map<String, ActiveStreamingTool> activeStreamingTools() {
+    return activeStreamingTools;
+  }
+
+  /** Returns the queue for managing live requests, if available for this invocation. */
+  public Optional<LiveRequestQueue> liveRequestQueue() {
+    return liveRequestQueue;
+  }
+
+  /** Returns the unique ID for this invocation. */
+  public String invocationId() {
+    return invocationId;
+  }
+
+  /**
+   * Sets the [branch] ID for the current invocation. A branch represents a fork in the conversation
+   * history.
+   */
+  public void branch(@Nullable String branch) {
+    this.branch = Optional.ofNullable(branch);
+  }
+
+  /**
+   * Returns the branch ID for the current invocation, if one is set. A branch represents a fork in
+   * the conversation history.
+   */
+  public Optional<String> branch() {
+    return branch;
+  }
+
+  /** Returns the agent being invoked. */
+  public BaseAgent agent() {
+    return agent;
+  }
+
+  /** Sets the [agent] being invoked. This is useful when delegating to a sub-agent. */
+  public void agent(BaseAgent agent) {
+    this.agent = agent;
+  }
+
+  /** Returns the session associated with this invocation. */
+  public Session session() {
+    return session;
+  }
+
+  /** Returns the user content that triggered this invocation, if any. */
+  public Optional<Content> userContent() {
+    return userContent;
+  }
+
+  /** Returns the configuration for the current agent run. */
+  public RunConfig runConfig() {
+    return runConfig;
+  }
+
+  /**
+   * Returns whether this invocation should be ended, e.g., due to reaching a terminal state or
+   * error.
+   */
+  public boolean endInvocation() {
+    return endInvocation;
+  }
+
+  /** Sets whether this invocation should be ended. */
+  public void setEndInvocation(boolean endInvocation) {
+    this.endInvocation = endInvocation;
+  }
+
+  /** Returns the application name associated with the session. */
+  public String appName() {
+    return session.appName();
+  }
+
+  /** Returns the user ID associated with the session. */
+  public String userId() {
+    return session.userId();
+  }
+
+  /** Generates a new unique ID for an invocation context. */
+  public static String newInvocationContextId() {
+    return "e-" + UUID.randomUUID();
+  }
+
+  /**
+   * Increments the count of LLM calls made during this invocation and throws an exception if the
+   * limit defined in {@link RunConfig} is exceeded.
+   *
+   * @throws LlmCallsLimitExceededException if the call limit is exceeded
+   */
+  public void incrementLlmCallsCount() throws LlmCallsLimitExceededException {
+    this.invocationCostManager.incrementAndEnforceLlmCallsLimit(this.runConfig);
+  }
+
+  /** Returns whether the current invocation is resumable. */
+  public boolean isResumable() {
+    return resumabilityConfig.isResumable();
+  }
+
+  /** Returns whether to pause the invocation right after this [event]. */
+  public boolean shouldPauseInvocation(Event event) {
+    if (!isResumable()) {
+      return false;
+    }
+
+    var longRunningToolIds = event.longRunningToolIds().orElse(ImmutableSet.of());
+    if (longRunningToolIds.isEmpty()) {
+      return false;
+    }
+
+    return event.functionCalls().stream()
+        .map(FunctionCall::id)
+        .flatMap(Optional::stream)
+        .anyMatch(functionCallId -> longRunningToolIds.contains(functionCallId));
+  }
+
+  private static class InvocationCostManager {
+
+    private int numberOfLlmCalls = 0;
+
+    void incrementAndEnforceLlmCallsLimit(RunConfig runConfig)
+        throws LlmCallsLimitExceededException {
+      this.numberOfLlmCalls++;
+
+      if (runConfig != null
+          && runConfig.maxLlmCalls() > 0
+          && this.numberOfLlmCalls > runConfig.maxLlmCalls()) {
+        throw new LlmCallsLimitExceededException(
+            "Max number of llm calls limit of " + runConfig.maxLlmCalls() + " exceeded");
+      }
+    }
+  }
+
+  /** Builder for {@link InvocationContext}. */
+  public static class Builder {
+
+    private BaseSessionService sessionService;
+
+    private BaseArtifactService artifactService;
+
+    private BaseMemoryService memoryService;
+
+    private PluginManager pluginManager = new PluginManager();
+
+    private Optional<LiveRequestQueue> liveRequestQueue = Optional.empty();
+
+    private Optional<String> branch = Optional.empty();
+
+    private String invocationId = newInvocationContextId();
+
+    private BaseAgent agent;
+
+    private Session session;
+
+    private Optional<Content> userContent = Optional.empty();
+
+    private RunConfig runConfig = RunConfig.builder().build();
+
+    private boolean endInvocation = false;
+
+    private ResumabilityConfig resumabilityConfig = new ResumabilityConfig();
+
+    /**
+     * Sets the session service for managing session state.
+     *
+     * @param sessionService the session service to use; required.
+     * @return this builder instance for chaining.
+     */
+    @CanIgnoreReturnValue
+    public Builder sessionService(BaseSessionService sessionService) {
+      this.sessionService = sessionService;
+      return this;
+    }
+
+    /**
+     * Sets the artifact service for persisting artifacts.
+     *
+     * @param artifactService the artifact service to use; required.
+     * @return this builder instance for chaining.
+     */
+    @CanIgnoreReturnValue
+    public Builder artifactService(BaseArtifactService artifactService) {
+      this.artifactService = artifactService;
+      return this;
+    }
+
+    /**
+     * Sets the memory service for accessing agent memory.
+     *
+     * @param memoryService the memory service to use.
+     * @return this builder instance for chaining.
+     */
+    @CanIgnoreReturnValue
+    public Builder memoryService(BaseMemoryService memoryService) {
+      this.memoryService = memoryService;
+      return this;
+    }
+
+    /**
+     * Sets the plugin manager for accessing tools and plugins.
+     *
+     * @param pluginManager the plugin manager to use.
+     * @return this builder instance for chaining.
+     */
+    @CanIgnoreReturnValue
+    public Builder pluginManager(PluginManager pluginManager) {
+      this.pluginManager = pluginManager;
+      return this;
+    }
+
+    /**
+     * Sets the queue for managing live requests.
+     *
+     * @param liveRequestQueue the queue for managing live requests.
+     * @return this builder instance for chaining.
+     * @deprecated Use {@link #liveRequestQueue(LiveRequestQueue)} instead.
+     */
+    // TODO: b/462140921 - Builders should not accept Optional parameters.
+    @Deprecated(forRemoval = true)
+    @CanIgnoreReturnValue
+    public Builder liveRequestQueue(Optional<LiveRequestQueue> liveRequestQueue) {
+      this.liveRequestQueue = liveRequestQueue;
+      return this;
+    }
+
+    /**
+     * Sets the queue for managing live requests.
+     *
+     * @param liveRequestQueue the queue for managing live requests.
+     * @return this builder instance for chaining.
+     */
+    @CanIgnoreReturnValue
+    public Builder liveRequestQueue(LiveRequestQueue liveRequestQueue) {
+      this.liveRequestQueue = Optional.of(liveRequestQueue);
+      return this;
+    }
+
+    /**
+     * Sets the branch ID for the invocation.
+     *
+     * @param branch the branch ID for the invocation.
+     * @return this builder instance for chaining.
+     * @deprecated Use {@link #branch(String)} instead.
+     */
+    // TODO: b/462140921 - Builders should not accept Optional parameters.
+    @Deprecated(forRemoval = true)
+    @CanIgnoreReturnValue
+    public Builder branch(Optional<String> branch) {
+      this.branch = branch;
+      return this;
+    }
+
+    /**
+     * Sets the branch ID for the invocation.
+     *
+     * @param branch the branch ID for the invocation.
+     * @return this builder instance for chaining.
+     */
+    @CanIgnoreReturnValue
+    public Builder branch(String branch) {
+      this.branch = Optional.of(branch);
+      return this;
+    }
+
+    /**
+     * Sets the unique ID for the invocation.
+     *
+     * @param invocationId the unique ID for the invocation.
+     * @return this builder instance for chaining.
+     */
+    @CanIgnoreReturnValue
+    public Builder invocationId(String invocationId) {
+      this.invocationId = invocationId;
+      return this;
+    }
+
+    /**
+     * Sets the agent being invoked.
+     *
+     * @param agent the agent being invoked; required.
+     * @return this builder instance for chaining.
+     */
+    @CanIgnoreReturnValue
+    public Builder agent(BaseAgent agent) {
+      this.agent = agent;
+      return this;
+    }
+
+    /**
+     * Sets the session associated with this invocation.
+     *
+     * @param session the session associated with this invocation; required.
+     * @return this builder instance for chaining.
+     */
+    @CanIgnoreReturnValue
+    public Builder session(Session session) {
+      this.session = session;
+      return this;
+    }
+
+    /**
+     * Sets the user content that triggered this invocation.
+     *
+     * @param userContent the user content that triggered this invocation.
+     * @return this builder instance for chaining.
+     */
+    @CanIgnoreReturnValue
+    public Builder userContent(Optional<Content> userContent) {
+      this.userContent = userContent;
+      return this;
+    }
+
+    /**
+     * Sets the user content that triggered this invocation.
+     *
+     * @param userContent the user content that triggered this invocation.
+     * @return this builder instance for chaining.
+     */
+    @CanIgnoreReturnValue
+    public Builder userContent(Content userContent) {
+      this.userContent = Optional.of(userContent);
+      return this;
+    }
+
+    /**
+     * Sets the configuration for the current agent run.
+     *
+     * @param runConfig the configuration for the current agent run.
+     * @return this builder instance for chaining.
+     */
+    @CanIgnoreReturnValue
+    public Builder runConfig(RunConfig runConfig) {
+      this.runConfig = runConfig;
+      return this;
+    }
+
+    /**
+     * Sets whether this invocation should be ended.
+     *
+     * @param endInvocation whether this invocation should be ended.
+     * @return this builder instance for chaining.
+     */
+    @CanIgnoreReturnValue
+    public Builder endInvocation(boolean endInvocation) {
+      this.endInvocation = endInvocation;
+      return this;
+    }
+
+    /**
+     * Sets the resumability configuration for the current agent run.
+     *
+     * @param resumabilityConfig the resumability configuration.
+     * @return this builder instance for chaining.
+     */
+    @CanIgnoreReturnValue
+    public Builder resumabilityConfig(ResumabilityConfig resumabilityConfig) {
+      this.resumabilityConfig = resumabilityConfig;
+      return this;
+    }
+
+    /**
+     * Builds the {@link InvocationContext} instance.
+     *
+     * @throws IllegalStateException if any required parameters are missing.
+     */
+    // TODO: b/462183912 - Add validation for required parameters.
+    public InvocationContext build() {
+      return new InvocationContext(this);
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof InvocationContext that)) {
+      return false;
+    }
+    return endInvocation == that.endInvocation
+        && Objects.equals(sessionService, that.sessionService)
+        && Objects.equals(artifactService, that.artifactService)
+        && Objects.equals(memoryService, that.memoryService)
+        && Objects.equals(pluginManager, that.pluginManager)
+        && Objects.equals(liveRequestQueue, that.liveRequestQueue)
+        && Objects.equals(activeStreamingTools, that.activeStreamingTools)
+        && Objects.equals(branch, that.branch)
+        && Objects.equals(invocationId, that.invocationId)
+        && Objects.equals(agent, that.agent)
+        && Objects.equals(session, that.session)
+        && Objects.equals(userContent, that.userContent)
+        && Objects.equals(runConfig, that.runConfig)
+        && Objects.equals(resumabilityConfig, that.resumabilityConfig);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        sessionService,
+        artifactService,
+        memoryService,
+        pluginManager,
+        liveRequestQueue,
+        activeStreamingTools,
+        branch,
+        invocationId,
+        agent,
+        session,
+        userContent,
+        runConfig,
+        endInvocation,
+        resumabilityConfig);
+  }
 }

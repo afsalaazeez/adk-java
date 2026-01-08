@@ -26,55 +26,61 @@ import java.util.Optional;
 /** Base interface for artifact services. */
 public interface BaseArtifactService {
 
-	/**
-	 * Saves an artifact.
-	 * @param appName the app name
-	 * @param userId the user ID
-	 * @param sessionId the session ID
-	 * @param filename the filename
-	 * @param artifact the artifact
-	 * @return the revision ID (version) of the saved artifact.
-	 */
-	Single<Integer> saveArtifact(String appName, String userId, String sessionId, String filename, Part artifact);
+  /**
+   * Saves an artifact.
+   *
+   * @param appName the app name
+   * @param userId the user ID
+   * @param sessionId the session ID
+   * @param filename the filename
+   * @param artifact the artifact
+   * @return the revision ID (version) of the saved artifact.
+   */
+  Single<Integer> saveArtifact(
+      String appName, String userId, String sessionId, String filename, Part artifact);
 
-	/**
-	 * Gets an artifact.
-	 * @param appName the app name
-	 * @param userId the user ID
-	 * @param sessionId the session ID
-	 * @param filename the filename
-	 * @param version Optional version number. If null, loads the latest version.
-	 * @return the artifact or empty if not found
-	 */
-	Maybe<Part> loadArtifact(String appName, String userId, String sessionId, String filename,
-			Optional<Integer> version);
+  /**
+   * Gets an artifact.
+   *
+   * @param appName the app name
+   * @param userId the user ID
+   * @param sessionId the session ID
+   * @param filename the filename
+   * @param version Optional version number. If null, loads the latest version.
+   * @return the artifact or empty if not found
+   */
+  Maybe<Part> loadArtifact(
+      String appName, String userId, String sessionId, String filename, Optional<Integer> version);
 
-	/**
-	 * Lists all the artifact filenames within a session.
-	 * @param appName the app name
-	 * @param userId the user ID
-	 * @param sessionId the session ID
-	 * @return the list artifact response containing filenames
-	 */
-	Single<ListArtifactsResponse> listArtifactKeys(String appName, String userId, String sessionId);
+  /**
+   * Lists all the artifact filenames within a session.
+   *
+   * @param appName the app name
+   * @param userId the user ID
+   * @param sessionId the session ID
+   * @return the list artifact response containing filenames
+   */
+  Single<ListArtifactsResponse> listArtifactKeys(String appName, String userId, String sessionId);
 
-	/**
-	 * Deletes an artifact.
-	 * @param appName the app name
-	 * @param userId the user ID
-	 * @param sessionId the session ID
-	 * @param filename the filename
-	 */
-	Completable deleteArtifact(String appName, String userId, String sessionId, String filename);
+  /**
+   * Deletes an artifact.
+   *
+   * @param appName the app name
+   * @param userId the user ID
+   * @param sessionId the session ID
+   * @param filename the filename
+   */
+  Completable deleteArtifact(String appName, String userId, String sessionId, String filename);
 
-	/**
-	 * Lists all the versions (as revision IDs) of an artifact.
-	 * @param appName the app name
-	 * @param userId the user ID
-	 * @param sessionId the session ID
-	 * @param filename the artifact filename
-	 * @return A list of integer version numbers.
-	 */
-	Single<ImmutableList<Integer>> listVersions(String appName, String userId, String sessionId, String filename);
-
+  /**
+   * Lists all the versions (as revision IDs) of an artifact.
+   *
+   * @param appName the app name
+   * @param userId the user ID
+   * @param sessionId the session ID
+   * @param filename the artifact filename
+   * @return A list of integer version numbers.
+   */
+  Single<ImmutableList<Integer>> listVersions(
+      String appName, String userId, String sessionId, String filename);
 }

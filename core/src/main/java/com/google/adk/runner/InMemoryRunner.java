@@ -24,25 +24,26 @@ import com.google.adk.sessions.InMemorySessionService;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 
-/**
- * The class for the in-memory GenAi runner, using in-memory artifact and session
- * services.
- */
+/** The class for the in-memory GenAi runner, using in-memory artifact and session services. */
 public class InMemoryRunner extends Runner {
 
-	public InMemoryRunner(BaseAgent agent) {
-		// TODO: Change the default appName to InMemoryRunner to align with adk python.
-		// Check the dev UI in case we break something there.
-		this(agent, /* appName= */ agent.name(), ImmutableList.of());
-	}
+  public InMemoryRunner(BaseAgent agent) {
+    // TODO: Change the default appName to InMemoryRunner to align with adk python.
+    // Check the dev UI in case we break something there.
+    this(agent, /* appName= */ agent.name(), ImmutableList.of());
+  }
 
-	public InMemoryRunner(BaseAgent agent, String appName) {
-		this(agent, appName, ImmutableList.of());
-	}
+  public InMemoryRunner(BaseAgent agent, String appName) {
+    this(agent, appName, ImmutableList.of());
+  }
 
-	public InMemoryRunner(BaseAgent agent, String appName, List<BasePlugin> plugins) {
-		super(agent, appName, new InMemoryArtifactService(), new InMemorySessionService(), new InMemoryMemoryService(),
-				plugins);
-	}
-
+  public InMemoryRunner(BaseAgent agent, String appName, List<BasePlugin> plugins) {
+    super(
+        agent,
+        appName,
+        new InMemoryArtifactService(),
+        new InMemorySessionService(),
+        new InMemoryMemoryService(),
+        plugins);
+  }
 }

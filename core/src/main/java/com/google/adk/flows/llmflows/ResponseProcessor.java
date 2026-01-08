@@ -26,48 +26,45 @@ import java.util.Optional;
 /** Interface for processing LLM responses. */
 public interface ResponseProcessor {
 
-	/** Result of response processing. */
-	@AutoValue
-	public abstract static class ResponseProcessingResult {
+  /** Result of response processing. */
+  @AutoValue
+  public abstract static class ResponseProcessingResult {
 
-		/**
-		 * Updated LLM response.
-		 *
-		 * <p>
-		 * This is the LLM response that will be returned to the client.
-		 */
-		public abstract LlmResponse updatedResponse();
+    /**
+     * Updated LLM response.
+     *
+     * <p>This is the LLM response that will be returned to the client.
+     */
+    public abstract LlmResponse updatedResponse();
 
-		/**
-		 * Events generated during processing.
-		 *
-		 * <p>
-		 * These events are not necessarily part of the LLM response.
-		 */
-		public abstract Iterable<Event> events();
+    /**
+     * Events generated during processing.
+     *
+     * <p>These events are not necessarily part of the LLM response.
+     */
+    public abstract Iterable<Event> events();
 
-		/**
-		 * The agent to transfer to.
-		 *
-		 * <p>
-		 * If present, the invocation will be transferred to the specified agent.
-		 */
-		public abstract Optional<String> transferToAgent();
+    /**
+     * The agent to transfer to.
+     *
+     * <p>If present, the invocation will be transferred to the specified agent.
+     */
+    public abstract Optional<String> transferToAgent();
 
-		/** Creates a new {@link ResponseProcessingResult}. */
-		public static ResponseProcessingResult create(LlmResponse updatedResponse, Iterable<Event> events,
-				Optional<String> transferToAgent) {
-			return new AutoValue_ResponseProcessor_ResponseProcessingResult(updatedResponse, events, transferToAgent);
-		}
+    /** Creates a new {@link ResponseProcessingResult}. */
+    public static ResponseProcessingResult create(
+        LlmResponse updatedResponse, Iterable<Event> events, Optional<String> transferToAgent) {
+      return new AutoValue_ResponseProcessor_ResponseProcessingResult(
+          updatedResponse, events, transferToAgent);
+    }
+  }
 
-	}
-
-	/**
-	 * Process the LLM response as part of the post-processing stage.
-	 * @param context the invocation context.
-	 * @param response the LLM response to process.
-	 * @return a list of events generated during processing (if any).
-	 */
-	Single<ResponseProcessingResult> processResponse(InvocationContext context, LlmResponse response);
-
+  /**
+   * Process the LLM response as part of the post-processing stage.
+   *
+   * @param context the invocation context.
+   * @param response the LLM response to process.
+   * @return a list of events generated during processing (if any).
+   */
+  Single<ResponseProcessingResult> processResponse(InvocationContext context, LlmResponse response);
 }

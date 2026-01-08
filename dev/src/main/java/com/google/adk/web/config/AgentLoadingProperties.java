@@ -23,22 +23,25 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "adk.agents")
 public class AgentLoadingProperties {
-  private String sourceDir = ".";
-  private String[] buildOutputDirs = {"target/classes", "build/classes/java/main", "build/classes"};
 
-  public String getSourceDir() {
-    return sourceDir;
-  }
+	private String sourceDir = ".";
 
-  public void setSourceDir(String sourceDir) {
-    this.sourceDir = sourceDir;
-  }
+	private String[] buildOutputDirs = { "target/classes", "build/classes/java/main", "build/classes" };
 
-  public String[] getBuildOutputDirs() {
-    return buildOutputDirs;
-  }
+	public String getSourceDir() {
+		return sourceDir;
+	}
 
-  public void setBuildOutputDirs(String[] buildOutputDirs) {
-    this.buildOutputDirs = buildOutputDirs;
-  }
+	public void setSourceDir(String sourceDir) {
+		this.sourceDir = sourceDir;
+	}
+
+	public String[] getBuildOutputDirs() {
+		return buildOutputDirs;
+	}
+
+	public void setBuildOutputDirs(String[] buildOutputDirs) {
+		this.buildOutputDirs = buildOutputDirs;
+	}
+
 }

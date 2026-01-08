@@ -24,24 +24,22 @@ import java.util.Optional;
 @AutoValue
 public abstract class GetSessionConfig {
 
-	public abstract Optional<Integer> numRecentEvents();
+  public abstract Optional<Integer> numRecentEvents();
 
-	public abstract Optional<Instant> afterTimestamp();
+  public abstract Optional<Instant> afterTimestamp();
 
-	/** Builder for {@link GetSessionConfig}. */
-	@AutoValue.Builder
-	public abstract static class Builder {
+  /** Builder for {@link GetSessionConfig}. */
+  @AutoValue.Builder
+  public abstract static class Builder {
 
-		public abstract Builder numRecentEvents(int numRecentEvents);
+    public abstract Builder numRecentEvents(int numRecentEvents);
 
-		public abstract Builder afterTimestamp(Instant afterTimestamp);
+    public abstract Builder afterTimestamp(Instant afterTimestamp);
 
-		public abstract GetSessionConfig build();
+    public abstract GetSessionConfig build();
+  }
 
-	}
-
-	public static Builder builder() {
-		return new AutoValue_GetSessionConfig.Builder();
-	}
-
+  public static Builder builder() {
+    return new AutoValue_GetSessionConfig.Builder();
+  }
 }

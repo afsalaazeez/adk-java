@@ -24,26 +24,24 @@ import java.util.List;
 @AutoValue
 public abstract class Example {
 
-	public abstract Content input();
+  public abstract Content input();
 
-	public abstract List<Content> output();
+  public abstract List<Content> output();
 
-	public static Builder builder() {
-		return new AutoValue_Example.Builder();
-	}
+  public static Builder builder() {
+    return new AutoValue_Example.Builder();
+  }
 
-	public abstract Builder toBuilder();
+  public abstract Builder toBuilder();
 
-	/** Builder for constructing {@link Example} instances. */
-	@AutoValue.Builder
-	public abstract static class Builder {
+  /** Builder for constructing {@link Example} instances. */
+  @AutoValue.Builder
+  public abstract static class Builder {
 
-		public abstract Builder input(Content input);
+    public abstract Builder input(Content input);
 
-		public abstract Builder output(List<Content> output);
+    public abstract Builder output(List<Content> output);
 
-		public abstract Example build();
-
-	}
-
+    public abstract Example build();
+  }
 }

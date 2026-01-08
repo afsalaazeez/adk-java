@@ -23,24 +23,22 @@ import io.reactivex.rxjava3.core.Flowable;
 /** Interface for the execution flows to run a group of agents. */
 public interface BaseFlow {
 
-	/**
-	 * Run this flow.
-	 *
-	 * <p>
-	 * To implement this method, the flow should follow the below requirements:
-	 *
-	 * <ol>
-	 * <li>1. `session` should be treated as immutable, DO NOT change it.
-	 * <li>2. The caller who trigger the flow is responsible for updating the session as
-	 * the events being generated. The subclass implementation will assume session is
-	 * updated after each yield event statement.
-	 * <li>3. A flow may spawn sub-agent flows depending on the agent definition.
-	 * </ol>
-	 */
-	Flowable<Event> run(InvocationContext invocationContext);
+  /**
+   * Run this flow.
+   *
+   * <p>To implement this method, the flow should follow the below requirements:
+   *
+   * <ol>
+   *   <li>1. `session` should be treated as immutable, DO NOT change it.
+   *   <li>2. The caller who trigger the flow is responsible for updating the session as the events
+   *       being generated. The subclass implementation will assume session is updated after each
+   *       yield event statement.
+   *   <li>3. A flow may spawn sub-agent flows depending on the agent definition.
+   * </ol>
+   */
+  Flowable<Event> run(InvocationContext invocationContext);
 
-	default Flowable<Event> runLive(InvocationContext invocationContext) {
-		throw new UnsupportedOperationException("Not implemented");
-	}
-
+  default Flowable<Event> runLive(InvocationContext invocationContext) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
 }

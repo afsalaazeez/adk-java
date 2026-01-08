@@ -27,15 +27,16 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
 
-  private final LiveWebSocketHandler liveWebSocketHandler;
+	private final LiveWebSocketHandler liveWebSocketHandler;
 
-  @Autowired
-  public WebSocketConfig(LiveWebSocketHandler liveWebSocketHandler) {
-    this.liveWebSocketHandler = liveWebSocketHandler;
-  }
+	@Autowired
+	public WebSocketConfig(LiveWebSocketHandler liveWebSocketHandler) {
+		this.liveWebSocketHandler = liveWebSocketHandler;
+	}
 
-  @Override
-  public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-    registry.addHandler(liveWebSocketHandler, "/run_live").setAllowedOrigins("*");
-  }
+	@Override
+	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+		registry.addHandler(liveWebSocketHandler, "/run_live").setAllowedOrigins("*");
+	}
+
 }

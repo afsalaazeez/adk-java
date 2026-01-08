@@ -28,24 +28,27 @@ import javax.annotation.Nullable;
 @JsonDeserialize(builder = AutoValue_ToolRecording.Builder.class)
 public abstract class ToolRecording {
 
-  /** The tool call. */
-  public abstract Optional<FunctionCall> toolCall();
+	/** The tool call. */
+	public abstract Optional<FunctionCall> toolCall();
 
-  /** The tool response. */
-  public abstract Optional<FunctionResponse> toolResponse();
+	/** The tool response. */
+	public abstract Optional<FunctionResponse> toolResponse();
 
-  public static Builder builder() {
-    return new AutoValue_ToolRecording.Builder();
-  }
+	public static Builder builder() {
+		return new AutoValue_ToolRecording.Builder();
+	}
 
-  /** Builder for ToolRecording. */
-  @AutoValue.Builder
-  @JsonPOJOBuilder(withPrefix = "")
-  public abstract static class Builder {
-    public abstract Builder toolCall(@Nullable FunctionCall toolCall);
+	/** Builder for ToolRecording. */
+	@AutoValue.Builder
+	@JsonPOJOBuilder(withPrefix = "")
+	public abstract static class Builder {
 
-    public abstract Builder toolResponse(@Nullable FunctionResponse toolResponse);
+		public abstract Builder toolCall(@Nullable FunctionCall toolCall);
 
-    public abstract ToolRecording build();
-  }
+		public abstract Builder toolResponse(@Nullable FunctionResponse toolResponse);
+
+		public abstract ToolRecording build();
+
+	}
+
 }
