@@ -20,25 +20,27 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * DTO for the response of GET
- * /apps/{appName}/users/{userId}/sessions/{sessionId}/events/{eventId}/graph. Contains the graph
- * representation (e.g., DOT source).
+ * /apps/{appName}/users/{userId}/sessions/{sessionId}/events/{eventId}/graph. Contains
+ * the graph representation (e.g., DOT source).
  */
 public class GraphResponse {
-  @JsonProperty("dotSrc")
-  public String dotSrc;
 
-  /**
-   * Constructs a GraphResponse.
-   *
-   * @param dotSrc The graph source string (e.g., in DOT format).
-   */
-  public GraphResponse(String dotSrc) {
-    this.dotSrc = dotSrc;
-  }
+	@JsonProperty("dotSrc")
+	public String dotSrc;
 
-  public GraphResponse() {}
+	/**
+	 * Constructs a GraphResponse.
+	 * @param dotSrc The graph source string (e.g., in DOT format).
+	 */
+	public GraphResponse(String dotSrc) {
+		this.dotSrc = dotSrc;
+	}
 
-  public String getDotSrc() {
-    return dotSrc;
-  }
+	public GraphResponse() {
+	}
+
+	public String getDotSrc() {
+		return dotSrc;
+	}
+
 }

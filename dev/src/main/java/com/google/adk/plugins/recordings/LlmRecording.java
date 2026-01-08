@@ -28,24 +28,27 @@ import javax.annotation.Nullable;
 @JsonDeserialize(builder = AutoValue_LlmRecording.Builder.class)
 public abstract class LlmRecording {
 
-  /** The LLM request. */
-  public abstract Optional<LlmRequest> llmRequest();
+	/** The LLM request. */
+	public abstract Optional<LlmRequest> llmRequest();
 
-  /** The LLM response. */
-  public abstract Optional<LlmResponse> llmResponse();
+	/** The LLM response. */
+	public abstract Optional<LlmResponse> llmResponse();
 
-  public static Builder builder() {
-    return new AutoValue_LlmRecording.Builder();
-  }
+	public static Builder builder() {
+		return new AutoValue_LlmRecording.Builder();
+	}
 
-  /** Builder for LlmRecording. */
-  @AutoValue.Builder
-  @JsonPOJOBuilder(withPrefix = "")
-  public abstract static class Builder {
-    public abstract Builder llmRequest(@Nullable LlmRequest llmRequest);
+	/** Builder for LlmRecording. */
+	@AutoValue.Builder
+	@JsonPOJOBuilder(withPrefix = "")
+	public abstract static class Builder {
 
-    public abstract Builder llmResponse(@Nullable LlmResponse llmResponse);
+		public abstract Builder llmRequest(@Nullable LlmRequest llmRequest);
 
-    public abstract LlmRecording build();
-  }
+		public abstract Builder llmResponse(@Nullable LlmResponse llmResponse);
+
+		public abstract LlmRecording build();
+
+	}
+
 }

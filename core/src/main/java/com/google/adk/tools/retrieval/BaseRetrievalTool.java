@@ -25,27 +25,29 @@ import java.util.Optional;
 /** Base class for retrieval tools. */
 public abstract class BaseRetrievalTool extends BaseTool {
 
-	public BaseRetrievalTool(String name, String description) {
-		super(name, description);
-	}
+  public BaseRetrievalTool(String name, String description) {
+    super(name, description);
+  }
 
-	public BaseRetrievalTool(String name, String description, boolean isLongRunning) {
-		super(name, description, isLongRunning);
-	}
+  public BaseRetrievalTool(String name, String description, boolean isLongRunning) {
+    super(name, description, isLongRunning);
+  }
 
-	@Override
-	public Optional<FunctionDeclaration> declaration() {
-		Schema querySchema = Schema.builder().type("STRING").description("The query to retrieve.").build();
-		Schema parametersSchema = Schema.builder()
-			.type("OBJECT")
-			.properties(Collections.singletonMap("query", querySchema))
-			.build();
+  @Override
+  public Optional<FunctionDeclaration> declaration() {
+    Schema querySchema =
+        Schema.builder().type("STRING").description("The query to retrieve.").build();
+    Schema parametersSchema =
+        Schema.builder()
+            .type("OBJECT")
+            .properties(Collections.singletonMap("query", querySchema))
+            .build();
 
-		return Optional.of(FunctionDeclaration.builder()
-			.name(this.name())
-			.description(this.description())
-			.parameters(parametersSchema)
-			.build());
-	}
-
+    return Optional.of(
+        FunctionDeclaration.builder()
+            .name(this.name())
+            .description(this.description())
+            .parameters(parametersSchema)
+            .build());
+  }
 }

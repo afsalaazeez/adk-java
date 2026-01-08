@@ -41,92 +41,101 @@ import java.util.regex.Pattern;
 /**
  * An in-memory memory service for prototyping purposes only.
  *
- * <p>
- * Uses keyword matching instead of semantic search.
+ * <p>Uses keyword matching instead of semantic search.
  */
 public final class InMemoryMemoryService implements BaseMemoryService {
 
-	// Pattern to extract words, matching the Python version.
-	private static final Pattern WORD_PATTERN = Pattern.compile("[A-Za-z]+");
+  // Pattern to extract words, matching the Python version.
+  private static final Pattern WORD_PATTERN = Pattern.compile("[A-Za-z]+");
 
-	/**
-	 * Keys are "app_name/user_id", values are maps of "session_id" to a list of events.
-	 */
-	private final Map<String, Map<String, List<Event>>> sessionEvents;
+  /** Keys are "app_name/user_id", values are maps of "session_id" to a list of events. */
+  private final Map<String, Map<String, List<Event>>> sessionEvents;
 
-	public InMemoryMemoryService() {
-		this.sessionEvents = new ConcurrentHashMap<>();
-	}
+  public InMemoryMemoryService() {
+    this.sessionEvents = new ConcurrentHashMap<>();
+  }
 
-	private static String userKey(String appName, String userId) {
-		return appName + "/" + userId;
-	}
+  private static String userKey(String appName, String userId) {
+    return appName + "/" + userId;
+  }
 
-	@Override
-	public Completable addSessionToMemory(Session session) {
-		return Completable.fromAction(() -> {
-			String key = userKey(session.appName(), session.userId());
-			Map<String, List<Event>> userSessions = sessionEvents.computeIfAbsent(key, k -> new ConcurrentHashMap<>());
-			ImmutableList<Event> nonEmptyEvents = session.events()
-				.stream()
-				.filter(event -> event.content().flatMap(c -> c.parts()).filter(parts -> !parts.isEmpty()).isPresent())
-				.collect(toImmutableList());
-			userSessions.put(session.id(), nonEmptyEvents);
-		});
-	}
+  @Override
+  public Completable addSessionToMemory(Session session) {
+    return Completable.fromAction(
+        () -> {
+          String key = userKey(session.appName(), session.userId());
+          Map<String, List<Event>> userSessions =
+              sessionEvents.computeIfAbsent(key, k -> new ConcurrentHashMap<>());
+          ImmutableList<Event> nonEmptyEvents =
+              session.events().stream()
+                  .filter(
+                      event ->
+                          event
+                              .content()
+                              .flatMap(c -> c.parts())
+                              .filter(parts -> !parts.isEmpty())
+                              .isPresent())
+                  .collect(toImmutableList());
+          userSessions.put(session.id(), nonEmptyEvents);
+        });
+  }
 
-	@Override
-	public Single<SearchMemoryResponse> searchMemory(String appName, String userId, String query) {
-		return Single.fromCallable(() -> {
-			String key = userKey(appName, userId);
+  @Override
+  public Single<SearchMemoryResponse> searchMemory(String appName, String userId, String query) {
+    return Single.fromCallable(
+        () -> {
+          String key = userKey(appName, userId);
 
-			if (!sessionEvents.containsKey(key)) {
-				return SearchMemoryResponse.builder().build();
-			}
+          if (!sessionEvents.containsKey(key)) {
+            return SearchMemoryResponse.builder().build();
+          }
 
-			Map<String, List<Event>> userSessions = sessionEvents.get(key);
+          Map<String, List<Event>> userSessions = sessionEvents.get(key);
 
-			ImmutableSet<String> wordsInQuery = ImmutableSet.copyOf(query.toLowerCase(Locale.ROOT).split("\\s+"));
+          ImmutableSet<String> wordsInQuery =
+              ImmutableSet.copyOf(query.toLowerCase(Locale.ROOT).split("\\s+"));
 
-			List<MemoryEntry> matchingMemories = new ArrayList<>();
+          List<MemoryEntry> matchingMemories = new ArrayList<>();
 
-			for (List<Event> eventsInSession : userSessions.values()) {
-				for (Event event : eventsInSession) {
-					if (event.content().isEmpty() || event.content().get().parts().isEmpty()) {
-						continue;
-					}
+          for (List<Event> eventsInSession : userSessions.values()) {
+            for (Event event : eventsInSession) {
+              if (event.content().isEmpty() || event.content().get().parts().isEmpty()) {
+                continue;
+              }
 
-					Set<String> wordsInEvent = new HashSet<>();
-					for (Part part : event.content().get().parts().get()) {
-						if (!Strings.isNullOrEmpty(part.text().get())) {
-							Matcher matcher = WORD_PATTERN.matcher(part.text().get());
-							while (matcher.find()) {
-								wordsInEvent.add(matcher.group().toLowerCase(Locale.ROOT));
-							}
-						}
-					}
+              Set<String> wordsInEvent = new HashSet<>();
+              for (Part part : event.content().get().parts().get()) {
+                if (!Strings.isNullOrEmpty(part.text().get())) {
+                  Matcher matcher = WORD_PATTERN.matcher(part.text().get());
+                  while (matcher.find()) {
+                    wordsInEvent.add(matcher.group().toLowerCase(Locale.ROOT));
+                  }
+                }
+              }
 
-					if (wordsInEvent.isEmpty()) {
-						continue;
-					}
+              if (wordsInEvent.isEmpty()) {
+                continue;
+              }
 
-					if (!Collections.disjoint(wordsInQuery, wordsInEvent)) {
-						MemoryEntry memory = MemoryEntry.builder()
-							.content(event.content().get())
-							.author(event.author())
-							.timestamp(formatTimestamp(event.timestamp()))
-							.build();
-						matchingMemories.add(memory);
-					}
-				}
-			}
+              if (!Collections.disjoint(wordsInQuery, wordsInEvent)) {
+                MemoryEntry memory =
+                    MemoryEntry.builder()
+                        .content(event.content().get())
+                        .author(event.author())
+                        .timestamp(formatTimestamp(event.timestamp()))
+                        .build();
+                matchingMemories.add(memory);
+              }
+            }
+          }
 
-			return SearchMemoryResponse.builder().setMemories(ImmutableList.copyOf(matchingMemories)).build();
-		});
-	}
+          return SearchMemoryResponse.builder()
+              .setMemories(ImmutableList.copyOf(matchingMemories))
+              .build();
+        });
+  }
 
-	private String formatTimestamp(long timestamp) {
-		return Instant.ofEpochSecond(timestamp).toString();
-	}
-
+  private String formatTimestamp(long timestamp) {
+    return Instant.ofEpochSecond(timestamp).toString();
+  }
 }

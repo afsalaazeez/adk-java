@@ -23,26 +23,24 @@ import java.util.Optional;
 @AutoValue
 public abstract class Model {
 
-	public abstract Optional<String> modelName();
+  public abstract Optional<String> modelName();
 
-	public abstract Optional<BaseLlm> model();
+  public abstract Optional<BaseLlm> model();
 
-	public static Builder builder() {
-		return new AutoValue_Model.Builder();
-	}
+  public static Builder builder() {
+    return new AutoValue_Model.Builder();
+  }
 
-	public abstract Builder toBuilder();
+  public abstract Builder toBuilder();
 
-	/** Builder for {@link Model}. */
-	@AutoValue.Builder
-	public abstract static class Builder {
+  /** Builder for {@link Model}. */
+  @AutoValue.Builder
+  public abstract static class Builder {
 
-		public abstract Builder modelName(String modelName);
+    public abstract Builder modelName(String modelName);
 
-		public abstract Builder model(BaseLlm model);
+    public abstract Builder model(BaseLlm model);
 
-		public abstract Model build();
-
-	}
-
+    public abstract Model build();
+  }
 }

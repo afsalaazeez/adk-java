@@ -30,59 +30,58 @@ import javax.annotation.Nullable;
 @JsonDeserialize(builder = SseServerParameters.Builder.class)
 public abstract class SseServerParameters {
 
-	/** The URL of the SSE server. */
-	public abstract String url();
+  /** The URL of the SSE server. */
+  public abstract String url();
 
-	/** The endpoint to connect to on the SSE server. */
-	@Nullable
-	public abstract String sseEndpoint();
+  /** The endpoint to connect to on the SSE server. */
+  @Nullable
+  public abstract String sseEndpoint();
 
-	/** Optional headers to include in the SSE connection request. */
-	@Nullable
-	public abstract ImmutableMap<String, Object> headers();
+  /** Optional headers to include in the SSE connection request. */
+  @Nullable
+  public abstract ImmutableMap<String, Object> headers();
 
-	/** The timeout for the initial connection attempt. */
-	@Nullable
-	public abstract Duration timeout();
+  /** The timeout for the initial connection attempt. */
+  @Nullable
+  public abstract Duration timeout();
 
-	/** The timeout for reading data from the SSE stream. */
-	@Nullable
-	public abstract Duration sseReadTimeout();
+  /** The timeout for reading data from the SSE stream. */
+  @Nullable
+  public abstract Duration sseReadTimeout();
 
-	/** Creates a new builder for {@link SseServerParameters}. */
-	public static Builder builder() {
-		return new AutoValue_SseServerParameters.Builder().timeout(Duration.ofSeconds(5))
-			.sseReadTimeout(Duration.ofMinutes(5));
-	}
+  /** Creates a new builder for {@link SseServerParameters}. */
+  public static Builder builder() {
+    return new AutoValue_SseServerParameters.Builder()
+        .timeout(Duration.ofSeconds(5))
+        .sseReadTimeout(Duration.ofMinutes(5));
+  }
 
-	/** Builder for {@link SseServerParameters}. */
-	@AutoValue.Builder
-	@JsonPOJOBuilder(buildMethodName = "build", withPrefix = "")
-	public abstract static class Builder {
+  /** Builder for {@link SseServerParameters}. */
+  @AutoValue.Builder
+  @JsonPOJOBuilder(buildMethodName = "build", withPrefix = "")
+  public abstract static class Builder {
 
-		@JsonCreator
-		static SseServerParameters.Builder jacksonBuilder() {
-			return SseServerParameters.builder();
-		}
+    @JsonCreator
+    static SseServerParameters.Builder jacksonBuilder() {
+      return SseServerParameters.builder();
+    }
 
-		/** Sets the URL of the SSE server. */
-		public abstract Builder url(String url);
+    /** Sets the URL of the SSE server. */
+    public abstract Builder url(String url);
 
-		/** Sets the endpoint to connect to on the SSE server. */
-		public abstract Builder sseEndpoint(String sseEndpoint);
+    /** Sets the endpoint to connect to on the SSE server. */
+    public abstract Builder sseEndpoint(String sseEndpoint);
 
-		/** Sets the headers for the SSE connection request. */
-		public abstract Builder headers(@Nullable Map<String, Object> headers);
+    /** Sets the headers for the SSE connection request. */
+    public abstract Builder headers(@Nullable Map<String, Object> headers);
 
-		/** Sets the timeout for the initial connection attempt. */
-		public abstract Builder timeout(@Nullable Duration timeout);
+    /** Sets the timeout for the initial connection attempt. */
+    public abstract Builder timeout(@Nullable Duration timeout);
 
-		/** Sets the timeout for reading data from the SSE stream. */
-		public abstract Builder sseReadTimeout(@Nullable Duration sseReadTimeout);
+    /** Sets the timeout for reading data from the SSE stream. */
+    public abstract Builder sseReadTimeout(@Nullable Duration sseReadTimeout);
 
-		/** Builds a new {@link SseServerParameters} instance. */
-		public abstract SseServerParameters build();
-
-	}
-
+    /** Builds a new {@link SseServerParameters} instance. */
+    public abstract SseServerParameters build();
+  }
 }

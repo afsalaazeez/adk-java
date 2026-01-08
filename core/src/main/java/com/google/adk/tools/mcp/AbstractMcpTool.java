@@ -41,122 +41,129 @@ import java.util.Optional;
  */
 public abstract class AbstractMcpTool<T> extends BaseTool {
 
-	protected final Tool mcpTool;
+  protected final Tool mcpTool;
 
-	protected final McpSessionManager mcpSessionManager;
+  protected final McpSessionManager mcpSessionManager;
 
-	protected final ObjectMapper objectMapper;
+  protected final ObjectMapper objectMapper;
 
-	// Volatile ensures write visibility in the asynchronous chain for McpAsyncTool.
-	protected volatile T mcpSession;
+  // Volatile ensures write visibility in the asynchronous chain for McpAsyncTool.
+  protected volatile T mcpSession;
 
-	protected AbstractMcpTool(Tool mcpTool, T mcpSession, McpSessionManager mcpSessionManager,
-			ObjectMapper objectMapper) {
-		super(mcpTool == null ? "" : mcpTool.name(),
-				mcpTool == null ? "" : (mcpTool.description().isEmpty() ? "" : mcpTool.description()));
+  protected AbstractMcpTool(
+      Tool mcpTool, T mcpSession, McpSessionManager mcpSessionManager, ObjectMapper objectMapper) {
+    super(
+        mcpTool == null ? "" : mcpTool.name(),
+        mcpTool == null ? "" : (mcpTool.description().isEmpty() ? "" : mcpTool.description()));
 
-		if (mcpTool == null) {
-			throw new IllegalArgumentException("mcpTool cannot be null");
-		}
-		if (mcpSession == null) {
-			throw new IllegalArgumentException("mcpSession cannot be null");
-		}
-		if (mcpSessionManager == null) {
-			throw new IllegalArgumentException("mcpSessionManager cannot be null");
-		}
-		if (objectMapper == null) {
-			throw new IllegalArgumentException("objectMapper cannot be null");
-		}
-		this.mcpTool = mcpTool;
-		this.mcpSession = mcpSession;
-		this.mcpSessionManager = mcpSessionManager;
-		this.objectMapper = objectMapper;
-	}
+    if (mcpTool == null) {
+      throw new IllegalArgumentException("mcpTool cannot be null");
+    }
+    if (mcpSession == null) {
+      throw new IllegalArgumentException("mcpSession cannot be null");
+    }
+    if (mcpSessionManager == null) {
+      throw new IllegalArgumentException("mcpSessionManager cannot be null");
+    }
+    if (objectMapper == null) {
+      throw new IllegalArgumentException("objectMapper cannot be null");
+    }
+    this.mcpTool = mcpTool;
+    this.mcpSession = mcpSession;
+    this.mcpSessionManager = mcpSessionManager;
+    this.objectMapper = objectMapper;
+  }
 
-	public ToolAnnotations annotations() {
-		return mcpTool.annotations();
-	}
+  public ToolAnnotations annotations() {
+    return mcpTool.annotations();
+  }
 
-	public Map<String, Object> meta() {
-		return mcpTool.meta();
-	}
+  public Map<String, Object> meta() {
+    return mcpTool.meta();
+  }
 
-	public T getMcpSession() {
-		return this.mcpSession;
-	}
+  public T getMcpSession() {
+    return this.mcpSession;
+  }
 
-	@Override
-	public Optional<FunctionDeclaration> declaration() {
-		JsonSchema inputSchema = this.mcpTool.inputSchema();
-		Map<String, Object> outputSchema = this.mcpTool.outputSchema();
-		try {
-			return Optional.ofNullable(inputSchema).map(value -> {
-				FunctionDeclaration.Builder builder = FunctionDeclaration.builder()
-					.name(this.name())
-					.description(this.description())
-					.parametersJsonSchema(value);
-				Optional.ofNullable(outputSchema).ifPresent(builder::responseJsonSchema);
-				return builder.build();
-			});
-		}
-		catch (RuntimeException e) {
-			throw new McpToolDeclarationException(
-					String.format("MCP tool:%s failed to get declaration, inputSchema:%s. outputSchema:%s.",
-							this.name(), inputSchema, outputSchema),
-					e);
-		}
-	}
+  @Override
+  public Optional<FunctionDeclaration> declaration() {
+    JsonSchema inputSchema = this.mcpTool.inputSchema();
+    Map<String, Object> outputSchema = this.mcpTool.outputSchema();
+    try {
+      return Optional.ofNullable(inputSchema)
+          .map(
+              value -> {
+                FunctionDeclaration.Builder builder =
+                    FunctionDeclaration.builder()
+                        .name(this.name())
+                        .description(this.description())
+                        .parametersJsonSchema(value);
+                Optional.ofNullable(outputSchema).ifPresent(builder::responseJsonSchema);
+                return builder.build();
+              });
+    } catch (RuntimeException e) {
+      throw new McpToolDeclarationException(
+          String.format(
+              "MCP tool:%s failed to get declaration, inputSchema:%s. outputSchema:%s.",
+              this.name(), inputSchema, outputSchema),
+          e);
+    }
+  }
 
-	@SuppressWarnings("PreferredInterfaceType") // BaseTool.runAsync() returns Map<String,
-	// Object>
-	protected static Map<String, Object> wrapCallResult(ObjectMapper objectMapper, String mcpToolName,
-			CallToolResult callResult) {
-		if (callResult == null) {
-			return ImmutableMap.of("error", "MCP framework error: CallToolResult was null");
-		}
+  @SuppressWarnings("PreferredInterfaceType") // BaseTool.runAsync() returns Map<String,
+  // Object>
+  protected static Map<String, Object> wrapCallResult(
+      ObjectMapper objectMapper, String mcpToolName, CallToolResult callResult) {
+    if (callResult == null) {
+      return ImmutableMap.of("error", "MCP framework error: CallToolResult was null");
+    }
 
-		List<Content> contents = callResult.content();
-		Boolean isToolError = callResult.isError();
+    List<Content> contents = callResult.content();
+    Boolean isToolError = callResult.isError();
 
-		if (isToolError != null && isToolError) {
-			String errorMessage = "Tool execution failed.";
-			if (contents != null && !contents.isEmpty() && contents.get(0) instanceof TextContent textContent) {
-				if (textContent.text() != null && !textContent.text().isEmpty()) {
-					errorMessage += " Details: " + textContent.text();
-				}
-			}
-			return ImmutableMap.of("error", errorMessage);
-		}
+    if (isToolError != null && isToolError) {
+      String errorMessage = "Tool execution failed.";
+      if (contents != null
+          && !contents.isEmpty()
+          && contents.get(0) instanceof TextContent textContent) {
+        if (textContent.text() != null && !textContent.text().isEmpty()) {
+          errorMessage += " Details: " + textContent.text();
+        }
+      }
+      return ImmutableMap.of("error", errorMessage);
+    }
 
-		if (contents == null || contents.isEmpty()) {
-			return ImmutableMap.of();
-		}
+    if (contents == null || contents.isEmpty()) {
+      return ImmutableMap.of();
+    }
 
-		List<String> textOutputs = new ArrayList<>();
-		for (Content content : contents) {
-			if (content instanceof TextContent textContent) {
-				if (textContent.text() != null) {
-					textOutputs.add(textContent.text());
-				}
-			}
-		}
+    List<String> textOutputs = new ArrayList<>();
+    for (Content content : contents) {
+      if (content instanceof TextContent textContent) {
+        if (textContent.text() != null) {
+          textOutputs.add(textContent.text());
+        }
+      }
+    }
 
-		if (textOutputs.isEmpty()) {
-			return ImmutableMap.of("error", "Tool '" + mcpToolName + "' returned content that is not TextContent.",
-					"content_details", contents.toString());
-		}
+    if (textOutputs.isEmpty()) {
+      return ImmutableMap.of(
+          "error",
+          "Tool '" + mcpToolName + "' returned content that is not TextContent.",
+          "content_details",
+          contents.toString());
+    }
 
-		List<Map<String, Object>> resultMaps = new ArrayList<>();
-		for (String textOutput : textOutputs) {
-			try {
-				resultMaps.add(objectMapper.readValue(textOutput, new TypeReference<Map<String, Object>>() {
-				}));
-			}
-			catch (JsonProcessingException e) {
-				resultMaps.add(ImmutableMap.of("text", textOutput));
-			}
-		}
-		return ImmutableMap.of("text_output", resultMaps);
-	}
-
+    List<Map<String, Object>> resultMaps = new ArrayList<>();
+    for (String textOutput : textOutputs) {
+      try {
+        resultMaps.add(
+            objectMapper.readValue(textOutput, new TypeReference<Map<String, Object>>() {}));
+      } catch (JsonProcessingException e) {
+        resultMaps.add(ImmutableMap.of("text", textOutput));
+      }
+    }
+    return ImmutableMap.of("text_output", resultMaps);
+  }
 }

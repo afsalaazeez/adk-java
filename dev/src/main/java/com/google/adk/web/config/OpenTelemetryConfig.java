@@ -29,49 +29,54 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/** Configuration class for OpenTelemetry, setting up the tracer provider and span exporter. */
+/**
+ * Configuration class for OpenTelemetry, setting up the tracer provider and span
+ * exporter.
+ */
 @Configuration
 public class OpenTelemetryConfig {
-  private static final Logger otelLog = LoggerFactory.getLogger(OpenTelemetryConfig.class);
 
-  @Bean
-  public ApiServerSpanExporter apiServerSpanExporter() {
-    return new ApiServerSpanExporter();
-  }
+	private static final Logger otelLog = LoggerFactory.getLogger(OpenTelemetryConfig.class);
 
-  @Bean(destroyMethod = "shutdown")
-  public SdkTracerProvider sdkTracerProvider(ApiServerSpanExporter apiServerSpanExporter) {
-    otelLog.debug("Configuring SdkTracerProvider with ApiServerSpanExporter.");
-    Resource resource =
-        Resource.getDefault()
-            .merge(
-                Resource.create(
-                    Attributes.of(AttributeKey.stringKey("service.name"), "adk-web-server")));
+	@Bean
+	public ApiServerSpanExporter apiServerSpanExporter() {
+		return new ApiServerSpanExporter();
+	}
 
-    return SdkTracerProvider.builder()
-        .addSpanProcessor(SimpleSpanProcessor.create(apiServerSpanExporter))
-        .setResource(resource)
-        .build();
-  }
+	@Bean(destroyMethod = "shutdown")
+	public SdkTracerProvider sdkTracerProvider(ApiServerSpanExporter apiServerSpanExporter) {
+		otelLog.debug("Configuring SdkTracerProvider with ApiServerSpanExporter.");
+		Resource resource = Resource.getDefault()
+			.merge(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), "adk-web-server")));
 
-  @Bean
-  public OpenTelemetry openTelemetrySdk(SdkTracerProvider sdkTracerProvider) {
-    otelLog.debug("Configuring OpenTelemetrySdk and registering globally.");
+		return SdkTracerProvider.builder()
+			.addSpanProcessor(SimpleSpanProcessor.create(apiServerSpanExporter))
+			.setResource(resource)
+			.build();
+	}
 
-    // Check if OpenTelemetry has already been set globally (common in tests)
-    try {
-      io.opentelemetry.api.GlobalOpenTelemetry.get();
-      // If we get here, it's already set, so just return a new instance without global
-      // registration
-      otelLog.debug("OpenTelemetry already registered globally, creating non-global instance.");
-      return OpenTelemetrySdk.builder().setTracerProvider(sdkTracerProvider).build();
-    } catch (IllegalStateException e) {
-      // GlobalOpenTelemetry hasn't been set yet, safe to register globally
-      otelLog.debug("Registering OpenTelemetry globally.");
-      OpenTelemetrySdk otelSdk =
-          OpenTelemetrySdk.builder().setTracerProvider(sdkTracerProvider).buildAndRegisterGlobal();
-      Runtime.getRuntime().addShutdownHook(new Thread(otelSdk::close));
-      return otelSdk;
-    }
-  }
+	@Bean
+	public OpenTelemetry openTelemetrySdk(SdkTracerProvider sdkTracerProvider) {
+		otelLog.debug("Configuring OpenTelemetrySdk and registering globally.");
+
+		// Check if OpenTelemetry has already been set globally (common in tests)
+		try {
+			io.opentelemetry.api.GlobalOpenTelemetry.get();
+			// If we get here, it's already set, so just return a new instance without
+			// global
+			// registration
+			otelLog.debug("OpenTelemetry already registered globally, creating non-global instance.");
+			return OpenTelemetrySdk.builder().setTracerProvider(sdkTracerProvider).build();
+		}
+		catch (IllegalStateException e) {
+			// GlobalOpenTelemetry hasn't been set yet, safe to register globally
+			otelLog.debug("Registering OpenTelemetry globally.");
+			OpenTelemetrySdk otelSdk = OpenTelemetrySdk.builder()
+				.setTracerProvider(sdkTracerProvider)
+				.buildAndRegisterGlobal();
+			Runtime.getRuntime().addShutdownHook(new Thread(otelSdk::close));
+			return otelSdk;
+		}
+	}
+
 }

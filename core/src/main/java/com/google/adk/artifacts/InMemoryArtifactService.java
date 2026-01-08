@@ -34,99 +34,114 @@ import java.util.stream.IntStream;
 /** An in-memory implementation of the {@link BaseArtifactService}. */
 public final class InMemoryArtifactService implements BaseArtifactService {
 
-	private final Map<String, Map<String, Map<String, Map<String, List<Part>>>>> artifacts;
+  private final Map<String, Map<String, Map<String, Map<String, List<Part>>>>> artifacts;
 
-	public InMemoryArtifactService() {
-		this.artifacts = new HashMap<>();
-	}
+  public InMemoryArtifactService() {
+    this.artifacts = new HashMap<>();
+  }
 
-	/**
-	 * Saves an artifact in memory and assigns a new version.
-	 * @return Single with assigned version number.
-	 */
-	@Override
-	public Single<Integer> saveArtifact(String appName, String userId, String sessionId, String filename,
-			Part artifact) {
-		List<Part> versions = artifacts.computeIfAbsent(appName, k -> new HashMap<>())
-			.computeIfAbsent(userId, k -> new HashMap<>())
-			.computeIfAbsent(sessionId, k -> new HashMap<>())
-			.computeIfAbsent(filename, k -> new ArrayList<>());
-		versions.add(artifact);
-		return Single.just(versions.size() - 1);
-	}
+  /**
+   * Saves an artifact in memory and assigns a new version.
+   *
+   * @return Single with assigned version number.
+   */
+  @Override
+  public Single<Integer> saveArtifact(
+      String appName, String userId, String sessionId, String filename, Part artifact) {
+    List<Part> versions =
+        artifacts
+            .computeIfAbsent(appName, k -> new HashMap<>())
+            .computeIfAbsent(userId, k -> new HashMap<>())
+            .computeIfAbsent(sessionId, k -> new HashMap<>())
+            .computeIfAbsent(filename, k -> new ArrayList<>());
+    versions.add(artifact);
+    return Single.just(versions.size() - 1);
+  }
 
-	/**
-	 * Loads an artifact by version or latest.
-	 * @return Maybe with the artifact, or empty if not found.
-	 */
-	@Override
-	public Maybe<Part> loadArtifact(String appName, String userId, String sessionId, String filename,
-			Optional<Integer> version) {
-		List<Part> versions = artifacts.getOrDefault(appName, new HashMap<>())
-			.getOrDefault(userId, new HashMap<>())
-			.getOrDefault(sessionId, new HashMap<>())
-			.getOrDefault(filename, new ArrayList<>());
+  /**
+   * Loads an artifact by version or latest.
+   *
+   * @return Maybe with the artifact, or empty if not found.
+   */
+  @Override
+  public Maybe<Part> loadArtifact(
+      String appName, String userId, String sessionId, String filename, Optional<Integer> version) {
+    List<Part> versions =
+        artifacts
+            .getOrDefault(appName, new HashMap<>())
+            .getOrDefault(userId, new HashMap<>())
+            .getOrDefault(sessionId, new HashMap<>())
+            .getOrDefault(filename, new ArrayList<>());
 
-		if (versions.isEmpty()) {
-			return Maybe.empty();
-		}
-		if (version.isPresent()) {
-			int v = version.get();
-			if (v >= 0 && v < versions.size()) {
-				return Maybe.just(versions.get(v));
-			}
-			else {
-				return Maybe.empty();
-			}
-		}
-		else {
-			return Maybe.fromOptional(Streams.findLast(versions.stream()));
-		}
-	}
+    if (versions.isEmpty()) {
+      return Maybe.empty();
+    }
+    if (version.isPresent()) {
+      int v = version.get();
+      if (v >= 0 && v < versions.size()) {
+        return Maybe.just(versions.get(v));
+      } else {
+        return Maybe.empty();
+      }
+    } else {
+      return Maybe.fromOptional(Streams.findLast(versions.stream()));
+    }
+  }
 
-	/**
-	 * Lists filenames of stored artifacts for the session.
-	 * @return Single with list of artifact filenames.
-	 */
-	@Override
-	public Single<ListArtifactsResponse> listArtifactKeys(String appName, String userId, String sessionId) {
-		return Single.just(ListArtifactsResponse.builder()
-			.filenames(ImmutableList.copyOf(artifacts.getOrDefault(appName, new HashMap<>())
-				.getOrDefault(userId, new HashMap<>())
-				.getOrDefault(sessionId, new HashMap<>())
-				.keySet()))
-			.build());
-	}
+  /**
+   * Lists filenames of stored artifacts for the session.
+   *
+   * @return Single with list of artifact filenames.
+   */
+  @Override
+  public Single<ListArtifactsResponse> listArtifactKeys(
+      String appName, String userId, String sessionId) {
+    return Single.just(
+        ListArtifactsResponse.builder()
+            .filenames(
+                ImmutableList.copyOf(
+                    artifacts
+                        .getOrDefault(appName, new HashMap<>())
+                        .getOrDefault(userId, new HashMap<>())
+                        .getOrDefault(sessionId, new HashMap<>())
+                        .keySet()))
+            .build());
+  }
 
-	/**
-	 * Deletes all versions of the given artifact.
-	 * @return Completable indicating completion.
-	 */
-	@Override
-	public Completable deleteArtifact(String appName, String userId, String sessionId, String filename) {
-		artifacts.getOrDefault(appName, new HashMap<>())
-			.getOrDefault(userId, new HashMap<>())
-			.getOrDefault(sessionId, new HashMap<>())
-			.remove(filename);
-		return Completable.complete();
-	}
+  /**
+   * Deletes all versions of the given artifact.
+   *
+   * @return Completable indicating completion.
+   */
+  @Override
+  public Completable deleteArtifact(
+      String appName, String userId, String sessionId, String filename) {
+    artifacts
+        .getOrDefault(appName, new HashMap<>())
+        .getOrDefault(userId, new HashMap<>())
+        .getOrDefault(sessionId, new HashMap<>())
+        .remove(filename);
+    return Completable.complete();
+  }
 
-	/**
-	 * Lists all versions of the specified artifact.
-	 * @return Single with list of version numbers.
-	 */
-	@Override
-	public Single<ImmutableList<Integer>> listVersions(String appName, String userId, String sessionId,
-			String filename) {
-		int size = artifacts.getOrDefault(appName, new HashMap<>())
-			.getOrDefault(userId, new HashMap<>())
-			.getOrDefault(sessionId, new HashMap<>())
-			.getOrDefault(filename, new ArrayList<>())
-			.size();
-		if (size == 0) {
-			return Single.just(ImmutableList.of());
-		}
-		return Single.just(IntStream.range(0, size).boxed().collect(toImmutableList()));
-	}
-
+  /**
+   * Lists all versions of the specified artifact.
+   *
+   * @return Single with list of version numbers.
+   */
+  @Override
+  public Single<ImmutableList<Integer>> listVersions(
+      String appName, String userId, String sessionId, String filename) {
+    int size =
+        artifacts
+            .getOrDefault(appName, new HashMap<>())
+            .getOrDefault(userId, new HashMap<>())
+            .getOrDefault(sessionId, new HashMap<>())
+            .getOrDefault(filename, new ArrayList<>())
+            .size();
+    if (size == 0) {
+      return Single.just(ImmutableList.of());
+    }
+    return Single.just(IntStream.range(0, size).boxed().collect(toImmutableList()));
+  }
 }

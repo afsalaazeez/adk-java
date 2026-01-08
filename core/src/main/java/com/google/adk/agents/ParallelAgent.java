@@ -28,116 +28,123 @@ import org.slf4j.LoggerFactory;
 /**
  * A shell agent that runs its sub-agents in parallel in isolated manner.
  *
- * <p>
- * This approach is beneficial for scenarios requiring multiple perspectives or attempts
- * on a single task, such as running different algorithms simultaneously or generating
- * multiple responses for review by a subsequent evaluation agent.
+ * <p>This approach is beneficial for scenarios requiring multiple perspectives or attempts on a
+ * single task, such as running different algorithms simultaneously or generating multiple responses
+ * for review by a subsequent evaluation agent.
  */
 public class ParallelAgent extends BaseAgent {
 
-	private static final Logger logger = LoggerFactory.getLogger(ParallelAgent.class);
+  private static final Logger logger = LoggerFactory.getLogger(ParallelAgent.class);
 
-	/**
-	 * Constructor for ParallelAgent.
-	 * @param name The agent's name.
-	 * @param description The agent's description.
-	 * @param subAgents The list of sub-agents to run in parallel.
-	 * @param beforeAgentCallback Optional callback before the agent runs.
-	 * @param afterAgentCallback Optional callback after the agent runs.
-	 */
-	private ParallelAgent(String name, String description, List<? extends BaseAgent> subAgents,
-			List<Callbacks.BeforeAgentCallback> beforeAgentCallback,
-			List<Callbacks.AfterAgentCallback> afterAgentCallback) {
+  /**
+   * Constructor for ParallelAgent.
+   *
+   * @param name The agent's name.
+   * @param description The agent's description.
+   * @param subAgents The list of sub-agents to run in parallel.
+   * @param beforeAgentCallback Optional callback before the agent runs.
+   * @param afterAgentCallback Optional callback after the agent runs.
+   */
+  private ParallelAgent(
+      String name,
+      String description,
+      List<? extends BaseAgent> subAgents,
+      List<Callbacks.BeforeAgentCallback> beforeAgentCallback,
+      List<Callbacks.AfterAgentCallback> afterAgentCallback) {
 
-		super(name, description, subAgents, beforeAgentCallback, afterAgentCallback);
-	}
+    super(name, description, subAgents, beforeAgentCallback, afterAgentCallback);
+  }
 
-	/** Builder for {@link ParallelAgent}. */
-	public static class Builder extends BaseAgent.Builder<Builder> {
+  /** Builder for {@link ParallelAgent}. */
+  public static class Builder extends BaseAgent.Builder<Builder> {
 
-		@Override
-		public ParallelAgent build() {
-			return new ParallelAgent(name, description, subAgents, beforeAgentCallback, afterAgentCallback);
-		}
+    @Override
+    public ParallelAgent build() {
+      return new ParallelAgent(
+          name, description, subAgents, beforeAgentCallback, afterAgentCallback);
+    }
+  }
 
-	}
+  public static Builder builder() {
+    return new Builder();
+  }
 
-	public static Builder builder() {
-		return new Builder();
-	}
+  /**
+   * Creates a ParallelAgent from configuration.
+   *
+   * @param config the agent configuration
+   * @param configAbsPath The absolute path to the agent config file.
+   * @return the configured ParallelAgent
+   * @throws ConfigurationException if the configuration is invalid
+   */
+  public static ParallelAgent fromConfig(ParallelAgentConfig config, String configAbsPath)
+      throws ConfigurationException {
+    logger.debug("Creating ParallelAgent from config: {}", config.name());
 
-	/**
-	 * Creates a ParallelAgent from configuration.
-	 * @param config the agent configuration
-	 * @param configAbsPath The absolute path to the agent config file.
-	 * @return the configured ParallelAgent
-	 * @throws ConfigurationException if the configuration is invalid
-	 */
-	public static ParallelAgent fromConfig(ParallelAgentConfig config, String configAbsPath)
-			throws ConfigurationException {
-		logger.debug("Creating ParallelAgent from config: {}", config.name());
+    Builder builder = ParallelAgent.builder();
+    ConfigAgentUtils.resolveAndSetCommonAgentFields(builder, config, configAbsPath);
 
-		Builder builder = ParallelAgent.builder();
-		ConfigAgentUtils.resolveAndSetCommonAgentFields(builder, config, configAbsPath);
+    // Build and return the agent
+    ParallelAgent agent = builder.build();
+    logger.info(
+        "Successfully created ParallelAgent: {} with {} subagents",
+        agent.name(),
+        agent.subAgents() != null ? agent.subAgents().size() : 0);
 
-		// Build and return the agent
-		ParallelAgent agent = builder.build();
-		logger.info("Successfully created ParallelAgent: {} with {} subagents", agent.name(),
-				agent.subAgents() != null ? agent.subAgents().size() : 0);
+    return agent;
+  }
 
-		return agent;
-	}
+  /**
+   * Sets the branch for the current agent in the invocation context.
+   *
+   * <p>Appends the agent name to the current branch, or sets it if undefined.
+   *
+   * @param currentAgent Current agent.
+   * @param invocationContext Invocation context to update.
+   */
+  private static void setBranchForCurrentAgent(
+      BaseAgent currentAgent, InvocationContext invocationContext) {
+    String branch = invocationContext.branch().orElse(null);
+    if (isNullOrEmpty(branch)) {
+      invocationContext.branch(currentAgent.name());
+    } else {
+      invocationContext.branch(branch + "." + currentAgent.name());
+    }
+  }
 
-	/**
-	 * Sets the branch for the current agent in the invocation context.
-	 *
-	 * <p>
-	 * Appends the agent name to the current branch, or sets it if undefined.
-	 * @param currentAgent Current agent.
-	 * @param invocationContext Invocation context to update.
-	 */
-	private static void setBranchForCurrentAgent(BaseAgent currentAgent, InvocationContext invocationContext) {
-		String branch = invocationContext.branch().orElse(null);
-		if (isNullOrEmpty(branch)) {
-			invocationContext.branch(currentAgent.name());
-		}
-		else {
-			invocationContext.branch(branch + "." + currentAgent.name());
-		}
-	}
+  /**
+   * Runs sub-agents in parallel and emits their events.
+   *
+   * <p>Sets the branch and merges event streams from all sub-agents.
+   *
+   * @param invocationContext Invocation context.
+   * @return Flowable emitting events from all sub-agents.
+   */
+  @Override
+  protected Flowable<Event> runAsyncImpl(InvocationContext invocationContext) {
+    setBranchForCurrentAgent(this, invocationContext);
 
-	/**
-	 * Runs sub-agents in parallel and emits their events.
-	 *
-	 * <p>
-	 * Sets the branch and merges event streams from all sub-agents.
-	 * @param invocationContext Invocation context.
-	 * @return Flowable emitting events from all sub-agents.
-	 */
-	@Override
-	protected Flowable<Event> runAsyncImpl(InvocationContext invocationContext) {
-		setBranchForCurrentAgent(this, invocationContext);
+    List<? extends BaseAgent> currentSubAgents = subAgents();
+    if (currentSubAgents == null || currentSubAgents.isEmpty()) {
+      return Flowable.empty();
+    }
 
-		List<? extends BaseAgent> currentSubAgents = subAgents();
-		if (currentSubAgents == null || currentSubAgents.isEmpty()) {
-			return Flowable.empty();
-		}
+    List<Flowable<Event>> agentFlowables = new ArrayList<>();
+    for (BaseAgent subAgent : currentSubAgents) {
+      agentFlowables.add(subAgent.runAsync(invocationContext));
+    }
+    return Flowable.merge(agentFlowables);
+  }
 
-		List<Flowable<Event>> agentFlowables = new ArrayList<>();
-		for (BaseAgent subAgent : currentSubAgents) {
-			agentFlowables.add(subAgent.runAsync(invocationContext));
-		}
-		return Flowable.merge(agentFlowables);
-	}
-
-	/**
-	 * Not supported for ParallelAgent.
-	 * @param invocationContext Invocation context.
-	 * @return Flowable that always throws UnsupportedOperationException.
-	 */
-	@Override
-	protected Flowable<Event> runLiveImpl(InvocationContext invocationContext) {
-		return Flowable.error(new UnsupportedOperationException("runLive is not defined for ParallelAgent yet."));
-	}
-
+  /**
+   * Not supported for ParallelAgent.
+   *
+   * @param invocationContext Invocation context.
+   * @return Flowable that always throws UnsupportedOperationException.
+   */
+  @Override
+  protected Flowable<Event> runLiveImpl(InvocationContext invocationContext) {
+    return Flowable.error(
+        new UnsupportedOperationException("runLive is not defined for ParallelAgent yet."));
+  }
 }

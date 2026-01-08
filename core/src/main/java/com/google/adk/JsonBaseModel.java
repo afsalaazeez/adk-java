@@ -26,64 +26,61 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.Optional;
 
-/**
- * The base class for the types that needs JSON serialization/deserialization capability.
- */
+/** The base class for the types that needs JSON serialization/deserialization capability. */
 public abstract class JsonBaseModel {
 
-	private static final ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper objectMapper = new ObjectMapper();
 
-	static {
-		objectMapper.setSerializationInclusion(JsonInclude.Include.ALWAYS)
-			.setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE)
-			.registerModule(new Jdk8Module())
-			.registerModule(new JavaTimeModule()) // TODO: echo sec module replace, locale
-			.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-			.configOverride(Optional.class)
-			.setInclude(JsonInclude.Value.construct(JsonInclude.Include.NON_ABSENT, JsonInclude.Include.NON_ABSENT));
-	}
+  static {
+    objectMapper
+        .setSerializationInclusion(JsonInclude.Include.ALWAYS)
+        .setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE)
+        .registerModule(new Jdk8Module())
+        .registerModule(new JavaTimeModule()) // TODO: echo sec module replace, locale
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .configOverride(Optional.class)
+        .setInclude(
+            JsonInclude.Value.construct(
+                JsonInclude.Include.NON_ABSENT, JsonInclude.Include.NON_ABSENT));
+  }
 
-	/** Serializes an object to a Json string. */
-	protected static String toJsonString(Object object) {
-		try {
-			return objectMapper.writeValueAsString(object);
-		}
-		catch (JsonProcessingException e) {
-			throw new IllegalStateException(e);
-		}
-	}
+  /** Serializes an object to a Json string. */
+  protected static String toJsonString(Object object) {
+    try {
+      return objectMapper.writeValueAsString(object);
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 
-	public static ObjectMapper getMapper() {
-		return JsonBaseModel.objectMapper;
-	}
+  public static ObjectMapper getMapper() {
+    return JsonBaseModel.objectMapper;
+  }
 
-	public String toJson() {
-		return toJsonString(this);
-	}
+  public String toJson() {
+    return toJsonString(this);
+  }
 
-	/** Serializes an object to a JsonNode. */
-	protected static JsonNode toJsonNode(Object object) {
-		return objectMapper.valueToTree(object);
-	}
+  /** Serializes an object to a JsonNode. */
+  protected static JsonNode toJsonNode(Object object) {
+    return objectMapper.valueToTree(object);
+  }
 
-	/** Deserializes a Json string to an object of the given type. */
-	public static <T extends JsonBaseModel> T fromJsonString(String jsonString, Class<T> clazz) {
-		try {
-			return objectMapper.readValue(jsonString, clazz);
-		}
-		catch (JsonProcessingException e) {
-			throw new IllegalStateException(e);
-		}
-	}
+  /** Deserializes a Json string to an object of the given type. */
+  public static <T extends JsonBaseModel> T fromJsonString(String jsonString, Class<T> clazz) {
+    try {
+      return objectMapper.readValue(jsonString, clazz);
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 
-	/** Deserializes a JsonNode to an object of the given type. */
-	public static <T extends JsonBaseModel> T fromJsonNode(JsonNode jsonNode, Class<T> clazz) {
-		try {
-			return objectMapper.treeToValue(jsonNode, clazz);
-		}
-		catch (JsonProcessingException e) {
-			throw new IllegalStateException(e);
-		}
-	}
-
+  /** Deserializes a JsonNode to an object of the given type. */
+  public static <T extends JsonBaseModel> T fromJsonNode(JsonNode jsonNode, Class<T> clazz) {
+    try {
+      return objectMapper.treeToValue(jsonNode, clazz);
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 }

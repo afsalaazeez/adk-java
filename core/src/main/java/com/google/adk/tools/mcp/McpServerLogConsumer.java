@@ -24,19 +24,18 @@ import org.slf4j.event.Level;
 
 class McpServerLogConsumer implements Consumer<LoggingMessageNotification> {
 
-	@Override
-	public void accept(LoggingMessageNotification notif) {
-		Logger log = LoggerFactory.getLogger(notif.logger());
-		log.atLevel(convert(notif.level())).log("{}", notif.data());
-	}
+  @Override
+  public void accept(LoggingMessageNotification notif) {
+    Logger log = LoggerFactory.getLogger(notif.logger());
+    log.atLevel(convert(notif.level())).log("{}", notif.data());
+  }
 
-	private Level convert(McpSchema.LoggingLevel level) {
-		return switch (level) {
-			case DEBUG -> Level.DEBUG;
-			case INFO, NOTICE -> Level.INFO;
-			case WARNING -> Level.WARN;
-			case ERROR, CRITICAL, ALERT, EMERGENCY -> Level.ERROR;
-		};
-	}
-
+  private Level convert(McpSchema.LoggingLevel level) {
+    return switch (level) {
+      case DEBUG -> Level.DEBUG;
+      case INFO, NOTICE -> Level.INFO;
+      case WARNING -> Level.WARN;
+      case ERROR, CRITICAL, ALERT, EMERGENCY -> Level.ERROR;
+    };
+  }
 }

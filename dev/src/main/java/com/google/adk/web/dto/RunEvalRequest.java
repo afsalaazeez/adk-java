@@ -20,23 +20,26 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
- * DTO for POST /apps/{appName}/eval_sets/{evalSetId}/run-eval requests. Contains information for
- * running evaluations.
+ * DTO for POST /apps/{appName}/eval_sets/{evalSetId}/run-eval requests. Contains
+ * information for running evaluations.
  */
 public class RunEvalRequest {
-  @JsonProperty("evalIds")
-  public List<String> evalIds;
 
-  @JsonProperty("evalMetrics")
-  public List<String> evalMetrics;
+	@JsonProperty("evalIds")
+	public List<String> evalIds;
 
-  public RunEvalRequest() {}
+	@JsonProperty("evalMetrics")
+	public List<String> evalMetrics;
 
-  public List<String> getEvalIds() {
-    return evalIds;
-  }
+	public RunEvalRequest() {
+	}
 
-  public List<String> getEvalMetrics() {
-    return evalMetrics;
-  }
+	public List<String> getEvalIds() {
+		return evalIds;
+	}
+
+	public List<String> getEvalMetrics() {
+		return evalMetrics;
+	}
+
 }

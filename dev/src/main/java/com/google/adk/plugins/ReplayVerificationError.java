@@ -18,11 +18,12 @@ package com.google.adk.plugins;
 /** Exception raised when replay verification fails. */
 public class ReplayVerificationError extends RuntimeException {
 
-  public ReplayVerificationError(String message) {
-    super(message);
-  }
+	public ReplayVerificationError(String message) {
+		super(message);
+	}
 
-  public ReplayVerificationError(String message, Throwable cause) {
-    super(message, cause);
-  }
+	public ReplayVerificationError(String message, Throwable cause) {
+		super(message, cause);
+	}
+
 }

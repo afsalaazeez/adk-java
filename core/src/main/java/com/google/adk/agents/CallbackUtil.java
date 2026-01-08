@@ -33,75 +33,73 @@ import org.slf4j.LoggerFactory;
 /** Utility methods for normalizing agent callbacks. */
 public final class CallbackUtil {
 
-	private static final Logger logger = LoggerFactory.getLogger(CallbackUtil.class);
+  private static final Logger logger = LoggerFactory.getLogger(CallbackUtil.class);
 
-	/**
-	 * Normalizes before-agent callbacks.
-	 * @param beforeAgentCallback Callback list (sync or async).
-	 * @return normalized async callbacks, or null if input is null.
-	 */
-	@CanIgnoreReturnValue
-	public static @Nullable ImmutableList<BeforeAgentCallback> getBeforeAgentCallbacks(
-			List<BeforeAgentCallbackBase> beforeAgentCallback) {
-		if (beforeAgentCallback == null) {
-			return null;
-		}
-		else if (beforeAgentCallback.isEmpty()) {
-			return ImmutableList.of();
-		}
-		else {
-			ImmutableList.Builder<BeforeAgentCallback> builder = ImmutableList.builder();
-			for (BeforeAgentCallbackBase callback : beforeAgentCallback) {
-				if (callback instanceof BeforeAgentCallback beforeAgentCallbackInstance) {
-					builder.add(beforeAgentCallbackInstance);
-				}
-				else if (callback instanceof BeforeAgentCallbackSync beforeAgentCallbackSyncInstance) {
-					builder.add((BeforeAgentCallback) (callbackContext) -> Maybe
-						.fromOptional(beforeAgentCallbackSyncInstance.call(callbackContext)));
-				}
-				else {
-					logger.warn("Invalid beforeAgentCallback callback type: %s. Ignoring this callback.",
-							callback.getClass().getName());
-				}
-			}
-			return builder.build();
-		}
-	}
+  /**
+   * Normalizes before-agent callbacks.
+   *
+   * @param beforeAgentCallback Callback list (sync or async).
+   * @return normalized async callbacks, or null if input is null.
+   */
+  @CanIgnoreReturnValue
+  public static @Nullable ImmutableList<BeforeAgentCallback> getBeforeAgentCallbacks(
+      List<BeforeAgentCallbackBase> beforeAgentCallback) {
+    if (beforeAgentCallback == null) {
+      return null;
+    } else if (beforeAgentCallback.isEmpty()) {
+      return ImmutableList.of();
+    } else {
+      ImmutableList.Builder<BeforeAgentCallback> builder = ImmutableList.builder();
+      for (BeforeAgentCallbackBase callback : beforeAgentCallback) {
+        if (callback instanceof BeforeAgentCallback beforeAgentCallbackInstance) {
+          builder.add(beforeAgentCallbackInstance);
+        } else if (callback instanceof BeforeAgentCallbackSync beforeAgentCallbackSyncInstance) {
+          builder.add(
+              (BeforeAgentCallback)
+                  (callbackContext) ->
+                      Maybe.fromOptional(beforeAgentCallbackSyncInstance.call(callbackContext)));
+        } else {
+          logger.warn(
+              "Invalid beforeAgentCallback callback type: %s. Ignoring this callback.",
+              callback.getClass().getName());
+        }
+      }
+      return builder.build();
+    }
+  }
 
-	/**
-	 * Normalizes after-agent callbacks.
-	 * @param afterAgentCallback Callback list (sync or async).
-	 * @return normalized async callbacks, or null if input is null.
-	 */
-	@CanIgnoreReturnValue
-	public static @Nullable ImmutableList<AfterAgentCallback> getAfterAgentCallbacks(
-			List<AfterAgentCallbackBase> afterAgentCallback) {
-		if (afterAgentCallback == null) {
-			return null;
-		}
-		else if (afterAgentCallback.isEmpty()) {
-			return ImmutableList.of();
-		}
-		else {
-			ImmutableList.Builder<AfterAgentCallback> builder = ImmutableList.builder();
-			for (AfterAgentCallbackBase callback : afterAgentCallback) {
-				if (callback instanceof AfterAgentCallback afterAgentCallbackInstance) {
-					builder.add(afterAgentCallbackInstance);
-				}
-				else if (callback instanceof AfterAgentCallbackSync afterAgentCallbackSyncInstance) {
-					builder.add((AfterAgentCallback) (callbackContext) -> Maybe
-						.fromOptional(afterAgentCallbackSyncInstance.call(callbackContext)));
-				}
-				else {
-					logger.warn("Invalid afterAgentCallback callback type: %s. Ignoring this callback.",
-							callback.getClass().getName());
-				}
-			}
-			return builder.build();
-		}
-	}
+  /**
+   * Normalizes after-agent callbacks.
+   *
+   * @param afterAgentCallback Callback list (sync or async).
+   * @return normalized async callbacks, or null if input is null.
+   */
+  @CanIgnoreReturnValue
+  public static @Nullable ImmutableList<AfterAgentCallback> getAfterAgentCallbacks(
+      List<AfterAgentCallbackBase> afterAgentCallback) {
+    if (afterAgentCallback == null) {
+      return null;
+    } else if (afterAgentCallback.isEmpty()) {
+      return ImmutableList.of();
+    } else {
+      ImmutableList.Builder<AfterAgentCallback> builder = ImmutableList.builder();
+      for (AfterAgentCallbackBase callback : afterAgentCallback) {
+        if (callback instanceof AfterAgentCallback afterAgentCallbackInstance) {
+          builder.add(afterAgentCallbackInstance);
+        } else if (callback instanceof AfterAgentCallbackSync afterAgentCallbackSyncInstance) {
+          builder.add(
+              (AfterAgentCallback)
+                  (callbackContext) ->
+                      Maybe.fromOptional(afterAgentCallbackSyncInstance.call(callbackContext)));
+        } else {
+          logger.warn(
+              "Invalid afterAgentCallback callback type: %s. Ignoring this callback.",
+              callback.getClass().getName());
+        }
+      }
+      return builder.build();
+    }
+  }
 
-	private CallbackUtil() {
-	}
-
+  private CallbackUtil() {}
 }

@@ -20,26 +20,18 @@ import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Properties for configuring CORS in ADK Web. This class is used to load CORS settings from
- * application properties.
+ * Properties for configuring CORS in ADK Web. This class is used to load CORS settings
+ * from application properties.
  */
 @ConfigurationProperties(prefix = "adk.web.cors")
-public record AdkWebCorsProperties(
-    String mapping,
-    List<String> origins,
-    List<String> methods,
-    List<String> headers,
-    boolean allowCredentials,
-    long maxAge) {
+public record AdkWebCorsProperties(String mapping, List<String> origins, List<String> methods, List<String> headers,
+		boolean allowCredentials, long maxAge) {
 
-  public AdkWebCorsProperties {
-    mapping = mapping != null ? mapping : "/**";
-    origins = origins != null && !origins.isEmpty() ? origins : List.of("*");
-    methods =
-        methods != null && !methods.isEmpty()
-            ? methods
-            : List.of("GET", "POST", "PUT", "DELETE", "OPTIONS");
-    headers = headers != null && !headers.isEmpty() ? headers : List.of("*");
-    maxAge = maxAge > 0 ? maxAge : 3600;
-  }
+	public AdkWebCorsProperties {
+		mapping = mapping != null ? mapping : "/**";
+		origins = origins != null && !origins.isEmpty() ? origins : List.of("*");
+		methods = methods != null && !methods.isEmpty() ? methods : List.of("GET", "POST", "PUT", "DELETE", "OPTIONS");
+		headers = headers != null && !headers.isEmpty() ? headers : List.of("*");
+		maxAge = maxAge > 0 ? maxAge : 3600;
+	}
 }

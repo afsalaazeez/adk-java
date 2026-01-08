@@ -23,28 +23,27 @@ import io.reactivex.rxjava3.core.Single;
 /**
  * Base contract for memory services.
  *
- * <p>
- * The service provides functionalities to ingest sessions into memory so that the memory
- * can be used for user queries.
+ * <p>The service provides functionalities to ingest sessions into memory so that the memory can be
+ * used for user queries.
  */
 public interface BaseMemoryService {
 
-	/**
-	 * Adds a session to the memory service.
-	 *
-	 * <p>
-	 * A session may be added multiple times during its lifetime.
-	 * @param session The session to add.
-	 */
-	Completable addSessionToMemory(Session session);
+  /**
+   * Adds a session to the memory service.
+   *
+   * <p>A session may be added multiple times during its lifetime.
+   *
+   * @param session The session to add.
+   */
+  Completable addSessionToMemory(Session session);
 
-	/**
-	 * Searches for sessions that match the query asynchronously.
-	 * @param appName The name of the application.
-	 * @param userId The id of the user.
-	 * @param query The query to search for.
-	 * @return A {@link SearchMemoryResponse} containing the matching memories.
-	 */
-	Single<SearchMemoryResponse> searchMemory(String appName, String userId, String query);
-
+  /**
+   * Searches for sessions that match the query asynchronously.
+   *
+   * @param appName The name of the application.
+   * @param userId The id of the user.
+   * @param query The query to search for.
+   * @return A {@link SearchMemoryResponse} containing the matching memories.
+   */
+  Single<SearchMemoryResponse> searchMemory(String appName, String userId, String query);
 }

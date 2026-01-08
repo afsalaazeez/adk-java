@@ -25,20 +25,18 @@ import java.util.List;
 @AutoValue
 public abstract class ListArtifactVersionsResponse {
 
-	public abstract ImmutableList<Part> versions();
+  public abstract ImmutableList<Part> versions();
 
-	/** Builder for {@link ListArtifactVersionsResponse}. */
-	@AutoValue.Builder
-	public abstract static class Builder {
+  /** Builder for {@link ListArtifactVersionsResponse}. */
+  @AutoValue.Builder
+  public abstract static class Builder {
 
-		public abstract Builder versions(List<Part> versions);
+    public abstract Builder versions(List<Part> versions);
 
-		public abstract ListArtifactVersionsResponse build();
+    public abstract ListArtifactVersionsResponse build();
+  }
 
-	}
-
-	public static Builder builder() {
-		return new AutoValue_ListArtifactVersionsResponse.Builder();
-	}
-
+  public static Builder builder() {
+    return new AutoValue_ListArtifactVersionsResponse.Builder();
+  }
 }

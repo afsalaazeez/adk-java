@@ -22,33 +22,27 @@ import java.util.function.Function;
 /**
  * Represents an instruction that can be provided to an agent to guide its behavior.
  *
- * <p>
- * In the instructions, you should describe concisely what the agent will do, when it
- * should defer to other agents/tools, and how it should respond to the user.
+ * <p>In the instructions, you should describe concisely what the agent will do, when it should
+ * defer to other agents/tools, and how it should respond to the user.
  *
- * <p>
- * Templating is supported using placeholders like {@code {variable_name}} or
- * {@code {artifact.artifact_name}}. These are replaced with values from the agent's
- * session state or loaded artifacts, respectively. For example, an instruction like
- * {@code "Translate the following text to {language}: {user_query}"} would substitute
- * {@code {language}} and {@code {user_query}} with their corresponding values from the
- * session state.
+ * <p>Templating is supported using placeholders like {@code {variable_name}} or {@code
+ * {artifact.artifact_name}}. These are replaced with values from the agent's session state or
+ * loaded artifacts, respectively. For example, an instruction like {@code "Translate the following
+ * text to {language}: {user_query}"} would substitute {@code {language}} and {@code {user_query}}
+ * with their corresponding values from the session state.
  *
- * <p>
- * Instructions can also be dynamically constructed using {@link Instruction.Provider}.
- * This allows for more complex logic where the instruction text is generated based on the
- * current {@link ReadonlyContext}. Additionally, an instruction could be built to include
- * specific information based on based on some external factors fetched during the
- * Provider call like the current time, the result of some API call, etc.
+ * <p>Instructions can also be dynamically constructed using {@link Instruction.Provider}. This
+ * allows for more complex logic where the instruction text is generated based on the current {@link
+ * ReadonlyContext}. Additionally, an instruction could be built to include specific information
+ * based on based on some external factors fetched during the Provider call like the current time,
+ * the result of some API call, etc.
  */
 public sealed interface Instruction permits Instruction.Static, Instruction.Provider {
 
-	/** Plain instruction directly provided to the agent. */
-	record Static(String instruction) implements Instruction {
-	}
+  /** Plain instruction directly provided to the agent. */
+  record Static(String instruction) implements Instruction {}
 
-	/** Returns an instruction dynamically constructed from the given context. */
-	record Provider(Function<ReadonlyContext, Single<String>> getInstruction) implements Instruction {
-	}
-
+  /** Returns an instruction dynamically constructed from the given context. */
+  record Provider(Function<ReadonlyContext, Single<String>> getInstruction)
+      implements Instruction {}
 }

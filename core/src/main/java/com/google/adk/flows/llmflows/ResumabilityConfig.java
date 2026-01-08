@@ -22,8 +22,8 @@ package com.google.adk.flows.llmflows;
  */
 public record ResumabilityConfig(boolean isResumable) {
 
-	/** Creates a new {@code ResumabilityConfig} with resumability disabled. */
-	public ResumabilityConfig() {
-		this(false);
-	}
+  /** Creates a new {@code ResumabilityConfig} with resumability disabled. */
+  public ResumabilityConfig() {
+    this(false);
+  }
 }

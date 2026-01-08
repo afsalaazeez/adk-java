@@ -26,24 +26,22 @@ import java.util.Optional;
 @AutoValue
 public abstract class ListEventsResponse {
 
-	public abstract ImmutableList<Event> events();
+  public abstract ImmutableList<Event> events();
 
-	public abstract Optional<String> nextPageToken();
+  public abstract Optional<String> nextPageToken();
 
-	/** Builder for {@link ListEventsResponse}. */
-	@AutoValue.Builder
-	public abstract static class Builder {
+  /** Builder for {@link ListEventsResponse}. */
+  @AutoValue.Builder
+  public abstract static class Builder {
 
-		public abstract Builder events(List<Event> events);
+    public abstract Builder events(List<Event> events);
 
-		public abstract Builder nextPageToken(String nextPageToken);
+    public abstract Builder nextPageToken(String nextPageToken);
 
-		public abstract ListEventsResponse build();
+    public abstract ListEventsResponse build();
+  }
 
-	}
-
-	public static Builder builder() {
-		return new AutoValue_ListEventsResponse.Builder().events(ImmutableList.of());
-	}
-
+  public static Builder builder() {
+    return new AutoValue_ListEventsResponse.Builder().events(ImmutableList.of());
+  }
 }

@@ -26,34 +26,37 @@ import javax.annotation.Nullable;
 @JsonDeserialize(builder = AutoValue_Recording.Builder.class)
 public abstract class Recording {
 
-  /** Index of the user message this recording belongs to (0-based). */
-  public abstract int userMessageIndex();
+	/** Index of the user message this recording belongs to (0-based). */
+	public abstract int userMessageIndex();
 
-  /** Name of the agent. */
-  public abstract String agentName();
+	/** Name of the agent. */
+	public abstract String agentName();
 
-  /** LLM request-response pair. */
-  public abstract Optional<LlmRecording> llmRecording();
+	/** LLM request-response pair. */
+	public abstract Optional<LlmRecording> llmRecording();
 
-  /** Tool call-response pair. */
-  public abstract Optional<ToolRecording> toolRecording();
+	/** Tool call-response pair. */
+	public abstract Optional<ToolRecording> toolRecording();
 
-  public static Builder builder() {
-    return new AutoValue_Recording.Builder();
-  }
+	public static Builder builder() {
+		return new AutoValue_Recording.Builder();
+	}
 
-  /** Builder for Recording. */
-  @AutoValue.Builder
-  @JsonPOJOBuilder(withPrefix = "")
-  public abstract static class Builder {
-    public abstract Builder userMessageIndex(int userMessageIndex);
+	/** Builder for Recording. */
+	@AutoValue.Builder
+	@JsonPOJOBuilder(withPrefix = "")
+	public abstract static class Builder {
 
-    public abstract Builder agentName(String agentName);
+		public abstract Builder userMessageIndex(int userMessageIndex);
 
-    public abstract Builder llmRecording(@Nullable LlmRecording llmRecording);
+		public abstract Builder agentName(String agentName);
 
-    public abstract Builder toolRecording(@Nullable ToolRecording toolRecording);
+		public abstract Builder llmRecording(@Nullable LlmRecording llmRecording);
 
-    public abstract Recording build();
-  }
+		public abstract Builder toolRecording(@Nullable ToolRecording toolRecording);
+
+		public abstract Recording build();
+
+	}
+
 }

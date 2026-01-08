@@ -26,24 +26,28 @@ import io.reactivex.rxjava3.core.Single;
 /** {@link RequestProcessor} that populates examples in LLM request. */
 public final class Examples implements RequestProcessor {
 
-	public Examples() {
-	}
+  public Examples() {}
 
-	@Override
-	public Single<RequestProcessor.RequestProcessingResult> processRequest(InvocationContext context,
-			LlmRequest request) {
-		if (!(context.agent() instanceof LlmAgent)) {
-			throw new IllegalArgumentException("Agent in InvocationContext is not an instance of Agent.");
-		}
-		LlmAgent agent = (LlmAgent) context.agent();
-		LlmRequest.Builder builder = request.toBuilder();
+  @Override
+  public Single<RequestProcessor.RequestProcessingResult> processRequest(
+      InvocationContext context, LlmRequest request) {
+    if (!(context.agent() instanceof LlmAgent)) {
+      throw new IllegalArgumentException("Agent in InvocationContext is not an instance of Agent.");
+    }
+    LlmAgent agent = (LlmAgent) context.agent();
+    LlmRequest.Builder builder = request.toBuilder();
 
-		String query = context.userContent().isPresent()
-				? context.userContent().get().parts().get().get(0).text().orElse("") : "";
-		agent.exampleProvider()
-			.ifPresent(exampleProvider -> builder
-				.appendInstructions(ImmutableList.of(ExampleUtils.buildExampleSi(exampleProvider, query))));
-		return Single.just(RequestProcessor.RequestProcessingResult.create(builder.build(), ImmutableList.of()));
-	}
-
+    String query =
+        context.userContent().isPresent()
+            ? context.userContent().get().parts().get().get(0).text().orElse("")
+            : "";
+    agent
+        .exampleProvider()
+        .ifPresent(
+            exampleProvider ->
+                builder.appendInstructions(
+                    ImmutableList.of(ExampleUtils.buildExampleSi(exampleProvider, query))));
+    return Single.just(
+        RequestProcessor.RequestProcessingResult.create(builder.build(), ImmutableList.of()));
+  }
 }

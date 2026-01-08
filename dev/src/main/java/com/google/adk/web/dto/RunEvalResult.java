@@ -21,52 +21,49 @@ import com.google.adk.JsonBaseModel;
 import java.util.List;
 
 /**
- * DTO for the response of POST /apps/{appName}/eval_sets/{evalSetId}/run-eval. Contains the results
- * of an evaluation run.
+ * DTO for the response of POST /apps/{appName}/eval_sets/{evalSetId}/run-eval. Contains
+ * the results of an evaluation run.
  */
 public class RunEvalResult extends JsonBaseModel {
-  @JsonProperty("appName")
-  public String appName;
 
-  @JsonProperty("evalSetId")
-  public String evalSetId;
+	@JsonProperty("appName")
+	public String appName;
 
-  @JsonProperty("evalId")
-  public String evalId;
+	@JsonProperty("evalSetId")
+	public String evalSetId;
 
-  @JsonProperty("finalEvalStatus")
-  public String finalEvalStatus;
+	@JsonProperty("evalId")
+	public String evalId;
 
-  @JsonProperty("evalMetricResults")
-  public List<List<Object>> evalMetricResults;
+	@JsonProperty("finalEvalStatus")
+	public String finalEvalStatus;
 
-  @JsonProperty("sessionId")
-  public String sessionId;
+	@JsonProperty("evalMetricResults")
+	public List<List<Object>> evalMetricResults;
 
-  /**
-   * Constructs a RunEvalResult.
-   *
-   * @param appName The application name.
-   * @param evalSetId The evaluation set ID.
-   * @param evalId The evaluation ID.
-   * @param finalEvalStatus The final status of the evaluation.
-   * @param evalMetricResults The results for each metric.
-   * @param sessionId The session ID associated with the evaluation.
-   */
-  public RunEvalResult(
-      String appName,
-      String evalSetId,
-      String evalId,
-      String finalEvalStatus,
-      List<List<Object>> evalMetricResults,
-      String sessionId) {
-    this.appName = appName;
-    this.evalSetId = evalSetId;
-    this.evalId = evalId;
-    this.finalEvalStatus = finalEvalStatus;
-    this.evalMetricResults = evalMetricResults;
-    this.sessionId = sessionId;
-  }
+	@JsonProperty("sessionId")
+	public String sessionId;
 
-  public RunEvalResult() {}
+	/**
+	 * Constructs a RunEvalResult.
+	 * @param appName The application name.
+	 * @param evalSetId The evaluation set ID.
+	 * @param evalId The evaluation ID.
+	 * @param finalEvalStatus The final status of the evaluation.
+	 * @param evalMetricResults The results for each metric.
+	 * @param sessionId The session ID associated with the evaluation.
+	 */
+	public RunEvalResult(String appName, String evalSetId, String evalId, String finalEvalStatus,
+			List<List<Object>> evalMetricResults, String sessionId) {
+		this.appName = appName;
+		this.evalSetId = evalSetId;
+		this.evalId = evalId;
+		this.finalEvalStatus = finalEvalStatus;
+		this.evalMetricResults = evalMetricResults;
+		this.sessionId = sessionId;
+	}
+
+	public RunEvalResult() {
+	}
+
 }

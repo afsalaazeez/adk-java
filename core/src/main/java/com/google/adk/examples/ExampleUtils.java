@@ -31,132 +31,139 @@ import java.util.List;
 /** Utility class for examples. */
 public final class ExampleUtils {
 
-	// Constant parts of the example string
-	private static final String EXAMPLES_INTRO = "<EXAMPLES>\nBegin few-shot\nThe following are examples of user queries and"
-			+ " model responses using the available tools.\n\n";
+  // Constant parts of the example string
+  private static final String EXAMPLES_INTRO =
+      "<EXAMPLES>\nBegin few-shot\nThe following are examples of user queries and"
+          + " model responses using the available tools.\n\n";
 
-	private static final String EXAMPLES_END = "End few-shot\nNow, try to follow these examples and complete the following"
-			+ " conversation\n<EXAMPLES>";
+  private static final String EXAMPLES_END =
+      "End few-shot\nNow, try to follow these examples and complete the following"
+          + " conversation\n<EXAMPLES>";
 
-	@SuppressWarnings("InlineFormatString")
-	private static final String EXAMPLE_START = "EXAMPLE %d:\nBegin example\n";
+  @SuppressWarnings("InlineFormatString")
+  private static final String EXAMPLE_START = "EXAMPLE %d:\nBegin example\n";
 
-	private static final String EXAMPLE_END = "End example\n\n";
+  private static final String EXAMPLE_END = "End example\n\n";
 
-	private static final String USER_PREFIX = "[user]\n";
+  private static final String USER_PREFIX = "[user]\n";
 
-	private static final String MODEL_PREFIX = "[model]\n";
+  private static final String MODEL_PREFIX = "[model]\n";
 
-	private static final String FUNCTION_CALL_PREFIX = "```tool_code\n";
+  private static final String FUNCTION_CALL_PREFIX = "```tool_code\n";
 
-	private static final String FUNCTION_CALL_SUFFIX = "\n```\n";
+  private static final String FUNCTION_CALL_SUFFIX = "\n```\n";
 
-	private static final String FUNCTION_RESPONSE_PREFIX = "```tool_outputs\n";
+  private static final String FUNCTION_RESPONSE_PREFIX = "```tool_outputs\n";
 
-	private static final String FUNCTION_RESPONSE_SUFFIX = "\n```\n";
+  private static final String FUNCTION_RESPONSE_SUFFIX = "\n```\n";
 
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-	/**
-	 * Converts a list of examples into a formatted few-shot prompt string.
-	 * @param examples List of examples.
-	 * @return string representation of the examples block.
-	 */
-	private static String convertExamplesToText(List<Example> examples) {
-		StringBuilder examplesStr = new StringBuilder();
+  /**
+   * Converts a list of examples into a formatted few-shot prompt string.
+   *
+   * @param examples List of examples.
+   * @return string representation of the examples block.
+   */
+  private static String convertExamplesToText(List<Example> examples) {
+    StringBuilder examplesStr = new StringBuilder();
 
-		// super header
-		examplesStr.append(EXAMPLES_INTRO);
+    // super header
+    examplesStr.append(EXAMPLES_INTRO);
 
-		for (int i = 0; i < examples.size(); i++) {
-			Example example = examples.get(i);
+    for (int i = 0; i < examples.size(); i++) {
+      Example example = examples.get(i);
 
-			// header
-			examplesStr.append(String.format(EXAMPLE_START, i + 1));
+      // header
+      examplesStr.append(String.format(EXAMPLE_START, i + 1));
 
-			// user content
-			appendInput(example, examplesStr);
+      // user content
+      appendInput(example, examplesStr);
 
-			// model content
-			for (Content content : example.output()) {
-				appendOutput(content, examplesStr);
-			}
+      // model content
+      for (Content content : example.output()) {
+        appendOutput(content, examplesStr);
+      }
 
-			// footer
-			examplesStr.append(EXAMPLE_END);
-		}
+      // footer
+      examplesStr.append(EXAMPLE_END);
+    }
 
-		// super footer
-		examplesStr.append(EXAMPLES_END);
+    // super footer
+    examplesStr.append(EXAMPLES_END);
 
-		return examplesStr.toString();
-	}
+    return examplesStr.toString();
+  }
 
-	private static void appendInput(Example example, StringBuilder builder) {
-		example.input()
-			.parts()
-			.flatMap(parts -> parts.stream().findFirst().flatMap(Part::text))
-			.ifPresent(text -> builder.append(USER_PREFIX).append(text).append("\n\n"));
-	}
+  private static void appendInput(Example example, StringBuilder builder) {
+    example
+        .input()
+        .parts()
+        .flatMap(parts -> parts.stream().findFirst().flatMap(Part::text))
+        .ifPresent(text -> builder.append(USER_PREFIX).append(text).append("\n\n"));
+  }
 
-	private static void appendOutput(Content output, StringBuilder builder) {
-		String rolePrefix = output.role().orElse("").equals("model") ? MODEL_PREFIX : USER_PREFIX;
-		for (Part part : output.parts().orElse(ImmutableList.of())) {
-			if (part.functionCall().isPresent()) {
-				appendFunctionCall(part.functionCall().get(), rolePrefix, builder);
-			}
-			else if (part.functionResponse().isPresent()) {
-				appendFunctionResponse(part.functionResponse().get(), builder);
-			}
-			else if (part.text().isPresent()) {
-				builder.append(rolePrefix).append(part.text().get()).append("\n");
-			}
-		}
-	}
+  private static void appendOutput(Content output, StringBuilder builder) {
+    String rolePrefix = output.role().orElse("").equals("model") ? MODEL_PREFIX : USER_PREFIX;
+    for (Part part : output.parts().orElse(ImmutableList.of())) {
+      if (part.functionCall().isPresent()) {
+        appendFunctionCall(part.functionCall().get(), rolePrefix, builder);
+      } else if (part.functionResponse().isPresent()) {
+        appendFunctionResponse(part.functionResponse().get(), builder);
+      } else if (part.text().isPresent()) {
+        builder.append(rolePrefix).append(part.text().get()).append("\n");
+      }
+    }
+  }
 
-	private static void appendFunctionCall(FunctionCall functionCall, String rolePrefix, StringBuilder builder) {
-		String argsString = functionCall.args().stream().flatMap(argsMap -> argsMap.entrySet().stream()).map(entry -> {
-			String key = entry.getKey();
-			Object value = entry.getValue();
-			if (value instanceof String) {
-				return String.format("%s='%s'", key, value);
-			}
-			else {
-				return String.format("%s=%s", key, value);
-			}
-		}).collect(joining(", "));
-		builder.append(rolePrefix)
-			.append(FUNCTION_CALL_PREFIX)
-			.append(functionCall.name().orElse(""))
-			.append("(")
-			.append(argsString)
-			.append(")")
-			.append(FUNCTION_CALL_SUFFIX);
-	}
+  private static void appendFunctionCall(
+      FunctionCall functionCall, String rolePrefix, StringBuilder builder) {
+    String argsString =
+        functionCall.args().stream()
+            .flatMap(argsMap -> argsMap.entrySet().stream())
+            .map(
+                entry -> {
+                  String key = entry.getKey();
+                  Object value = entry.getValue();
+                  if (value instanceof String) {
+                    return String.format("%s='%s'", key, value);
+                  } else {
+                    return String.format("%s=%s", key, value);
+                  }
+                })
+            .collect(joining(", "));
+    builder
+        .append(rolePrefix)
+        .append(FUNCTION_CALL_PREFIX)
+        .append(functionCall.name().orElse(""))
+        .append("(")
+        .append(argsString)
+        .append(")")
+        .append(FUNCTION_CALL_SUFFIX);
+  }
 
-	private static void appendFunctionResponse(FunctionResponse response, StringBuilder builder) {
-		try {
-			Object responseMap = response.response().orElse(ImmutableMap.of());
-			builder.append(FUNCTION_RESPONSE_PREFIX)
-				.append(OBJECT_MAPPER.writeValueAsString(responseMap))
-				.append(FUNCTION_RESPONSE_SUFFIX);
-		}
-		catch (JsonProcessingException e) {
-			builder.append(FUNCTION_RESPONSE_PREFIX).append(FUNCTION_RESPONSE_SUFFIX);
-		}
-	}
+  private static void appendFunctionResponse(FunctionResponse response, StringBuilder builder) {
+    try {
+      Object responseMap = response.response().orElse(ImmutableMap.of());
+      builder
+          .append(FUNCTION_RESPONSE_PREFIX)
+          .append(OBJECT_MAPPER.writeValueAsString(responseMap))
+          .append(FUNCTION_RESPONSE_SUFFIX);
+    } catch (JsonProcessingException e) {
+      builder.append(FUNCTION_RESPONSE_PREFIX).append(FUNCTION_RESPONSE_SUFFIX);
+    }
+  }
 
-	/**
-	 * Builds a formatted few-shot example string for the given query.
-	 * @param exampleProvider Source of examples.
-	 * @param query User query.
-	 * @return formatted string with few-shot examples.
-	 */
-	public static String buildExampleSi(BaseExampleProvider exampleProvider, String query) {
-		return convertExamplesToText(exampleProvider.getExamples(query));
-	}
+  /**
+   * Builds a formatted few-shot example string for the given query.
+   *
+   * @param exampleProvider Source of examples.
+   * @param query User query.
+   * @return formatted string with few-shot examples.
+   */
+  public static String buildExampleSi(BaseExampleProvider exampleProvider, String query) {
+    return convertExamplesToText(exampleProvider.getExamples(query));
+  }
 
-	private ExampleUtils() {
-	}
-
+  private ExampleUtils() {}
 }

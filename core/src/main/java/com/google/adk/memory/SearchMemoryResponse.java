@@ -24,28 +24,26 @@ import java.util.List;
 @AutoValue
 public abstract class SearchMemoryResponse {
 
-	/** Returns a list of memory entries that relate to the search query. */
-	public abstract ImmutableList<MemoryEntry> memories();
+  /** Returns a list of memory entries that relate to the search query. */
+  public abstract ImmutableList<MemoryEntry> memories();
 
-	/** Creates a new builder for {@link SearchMemoryResponse}. */
-	public static Builder builder() {
-		return new AutoValue_SearchMemoryResponse.Builder().setMemories(ImmutableList.of());
-	}
+  /** Creates a new builder for {@link SearchMemoryResponse}. */
+  public static Builder builder() {
+    return new AutoValue_SearchMemoryResponse.Builder().setMemories(ImmutableList.of());
+  }
 
-	/** Builder for {@link SearchMemoryResponse}. */
-	@AutoValue.Builder
-	public abstract static class Builder {
+  /** Builder for {@link SearchMemoryResponse}. */
+  @AutoValue.Builder
+  public abstract static class Builder {
 
-		abstract Builder setMemories(ImmutableList<MemoryEntry> memories);
+    abstract Builder setMemories(ImmutableList<MemoryEntry> memories);
 
-		/** Sets the list of memory entries using a list. */
-		public Builder setMemories(List<MemoryEntry> memories) {
-			return setMemories(ImmutableList.copyOf(memories));
-		}
+    /** Sets the list of memory entries using a list. */
+    public Builder setMemories(List<MemoryEntry> memories) {
+      return setMemories(ImmutableList.copyOf(memories));
+    }
 
-		/** Builds the immutable {@link SearchMemoryResponse} object. */
-		public abstract SearchMemoryResponse build();
-
-	}
-
+    /** Builds the immutable {@link SearchMemoryResponse} object. */
+    public abstract SearchMemoryResponse build();
+  }
 }

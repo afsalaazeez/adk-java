@@ -43,217 +43,225 @@ import org.jspecify.annotations.Nullable;
 /** The base class for all ADK tools. */
 public abstract class BaseTool {
 
-	private final String name;
+  private final String name;
 
-	private final String description;
+  private final String description;
 
-	private final boolean isLongRunning;
+  private final boolean isLongRunning;
 
-	private final HashMap<String, Object> customMetadata;
+  private final HashMap<String, Object> customMetadata;
 
-	protected BaseTool(@Nonnull String name, @Nonnull String description) {
-		this(name, description, /* isLongRunning= */ false);
-	}
+  protected BaseTool(@Nonnull String name, @Nonnull String description) {
+    this(name, description, /* isLongRunning= */ false);
+  }
 
-	protected BaseTool(@Nonnull String name, @Nonnull String description, boolean isLongRunning) {
-		this.name = name;
-		this.description = description;
-		this.isLongRunning = isLongRunning;
-		customMetadata = new HashMap<>();
-	}
+  protected BaseTool(@Nonnull String name, @Nonnull String description, boolean isLongRunning) {
+    this.name = name;
+    this.description = description;
+    this.isLongRunning = isLongRunning;
+    customMetadata = new HashMap<>();
+  }
 
-	public String name() {
-		return name;
-	}
+  public String name() {
+    return name;
+  }
 
-	public String description() {
-		return description;
-	}
+  public String description() {
+    return description;
+  }
 
-	public boolean longRunning() {
-		return isLongRunning;
-	}
+  public boolean longRunning() {
+    return isLongRunning;
+  }
 
-	/** Gets the {@link FunctionDeclaration} representation of this tool. */
-	public Optional<FunctionDeclaration> declaration() {
-		return Optional.empty();
-	}
+  /** Gets the {@link FunctionDeclaration} representation of this tool. */
+  public Optional<FunctionDeclaration> declaration() {
+    return Optional.empty();
+  }
 
-	/** Returns a read-only view of the tool metadata. */
-	public ImmutableMap<String, Object> customMetadata() {
-		return ImmutableMap.copyOf(customMetadata);
-	}
+  /** Returns a read-only view of the tool metadata. */
+  public ImmutableMap<String, Object> customMetadata() {
+    return ImmutableMap.copyOf(customMetadata);
+  }
 
-	/** Sets custom metadata to the tool associated with a key. */
-	public void setCustomMetadata(String key, Object value) {
-		customMetadata.put(key, value);
-	}
+  /** Sets custom metadata to the tool associated with a key. */
+  public void setCustomMetadata(String key, Object value) {
+    customMetadata.put(key, value);
+  }
 
-	/** Calls a tool. */
-	public Single<Map<String, Object>> runAsync(Map<String, Object> args, ToolContext toolContext) {
-		throw new UnsupportedOperationException("This method is not implemented.");
-	}
+  /** Calls a tool. */
+  public Single<Map<String, Object>> runAsync(Map<String, Object> args, ToolContext toolContext) {
+    throw new UnsupportedOperationException("This method is not implemented.");
+  }
 
-	/**
-	 * Processes the outgoing {@link LlmRequest.Builder}.
-	 *
-	 * <p>
-	 * This implementation adds the current tool's {@link #declaration()} to the
-	 * {@link GenerateContentConfig} within the builder. If a tool with function
-	 * declarations already exists, the current tool's declaration is merged into it.
-	 * Otherwise, a new tool definition with the current tool's declaration is created.
-	 * The current tool itself is also added to the builder's internal list of tools.
-	 * Override this method for processing the outgoing request.
-	 */
-	@CanIgnoreReturnValue
-	public Completable processLlmRequest(LlmRequest.Builder llmRequestBuilder, ToolContext toolContext) {
-		if (declaration().isEmpty()) {
-			return Completable.complete();
-		}
+  /**
+   * Processes the outgoing {@link LlmRequest.Builder}.
+   *
+   * <p>This implementation adds the current tool's {@link #declaration()} to the {@link
+   * GenerateContentConfig} within the builder. If a tool with function declarations already exists,
+   * the current tool's declaration is merged into it. Otherwise, a new tool definition with the
+   * current tool's declaration is created. The current tool itself is also added to the builder's
+   * internal list of tools. Override this method for processing the outgoing request.
+   */
+  @CanIgnoreReturnValue
+  public Completable processLlmRequest(
+      LlmRequest.Builder llmRequestBuilder, ToolContext toolContext) {
+    if (declaration().isEmpty()) {
+      return Completable.complete();
+    }
 
-		llmRequestBuilder.appendTools(ImmutableList.of(this));
+    llmRequestBuilder.appendTools(ImmutableList.of(this));
 
-		LlmRequest llmRequest = llmRequestBuilder.build();
-		ImmutableList<Tool> toolsWithoutFunctionDeclarations = findToolsWithoutFunctionDeclarations(llmRequest);
-		Tool toolWithFunctionDeclarations = findToolWithFunctionDeclarations(llmRequest);
-		// If LlmRequest GenerateContentConfig already has a function calling tool,
-		// merge the function declarations.
-		// Otherwise, add a new tool definition with function calling declaration..
-		if (toolWithFunctionDeclarations == null) {
-			toolWithFunctionDeclarations = Tool.builder()
-				.functionDeclarations(ImmutableList.of(declaration().get()))
-				.build();
-		}
-		else {
-			toolWithFunctionDeclarations = toolWithFunctionDeclarations.toBuilder()
-				.functionDeclarations(ImmutableList.<FunctionDeclaration>builder()
-					.addAll(toolWithFunctionDeclarations.functionDeclarations().orElse(ImmutableList.of()))
-					.add(declaration().get())
-					.build())
-				.build();
-		}
-		ImmutableList<Tool> newTools = new ImmutableList.Builder<Tool>().addAll(toolsWithoutFunctionDeclarations)
-			.add(toolWithFunctionDeclarations)
-			.build();
-		// Patch the GenerateContentConfig with the new tool definition.
-		GenerateContentConfig generateContentConfig = llmRequest.config()
-			.map(GenerateContentConfig::toBuilder)
-			.orElse(GenerateContentConfig.builder())
-			.tools(newTools)
-			.build();
-		LiveConnectConfig liveConnectConfig = llmRequest.liveConnectConfig().toBuilder().tools(newTools).build();
-		llmRequestBuilder.config(generateContentConfig);
-		llmRequestBuilder.liveConnectConfig(liveConnectConfig);
-		return Completable.complete();
-	}
+    LlmRequest llmRequest = llmRequestBuilder.build();
+    ImmutableList<Tool> toolsWithoutFunctionDeclarations =
+        findToolsWithoutFunctionDeclarations(llmRequest);
+    Tool toolWithFunctionDeclarations = findToolWithFunctionDeclarations(llmRequest);
+    // If LlmRequest GenerateContentConfig already has a function calling tool,
+    // merge the function declarations.
+    // Otherwise, add a new tool definition with function calling declaration..
+    if (toolWithFunctionDeclarations == null) {
+      toolWithFunctionDeclarations =
+          Tool.builder().functionDeclarations(ImmutableList.of(declaration().get())).build();
+    } else {
+      toolWithFunctionDeclarations =
+          toolWithFunctionDeclarations.toBuilder()
+              .functionDeclarations(
+                  ImmutableList.<FunctionDeclaration>builder()
+                      .addAll(
+                          toolWithFunctionDeclarations
+                              .functionDeclarations()
+                              .orElse(ImmutableList.of()))
+                      .add(declaration().get())
+                      .build())
+              .build();
+    }
+    ImmutableList<Tool> newTools =
+        new ImmutableList.Builder<Tool>()
+            .addAll(toolsWithoutFunctionDeclarations)
+            .add(toolWithFunctionDeclarations)
+            .build();
+    // Patch the GenerateContentConfig with the new tool definition.
+    GenerateContentConfig generateContentConfig =
+        llmRequest
+            .config()
+            .map(GenerateContentConfig::toBuilder)
+            .orElse(GenerateContentConfig.builder())
+            .tools(newTools)
+            .build();
+    LiveConnectConfig liveConnectConfig =
+        llmRequest.liveConnectConfig().toBuilder().tools(newTools).build();
+    llmRequestBuilder.config(generateContentConfig);
+    llmRequestBuilder.liveConnectConfig(liveConnectConfig);
+    return Completable.complete();
+  }
 
-	/**
-	 * Finds a tool in GenerateContentConfig that has function calling declarations, or
-	 * returns null otherwise.
-	 */
-	private static @Nullable Tool findToolWithFunctionDeclarations(LlmRequest llmRequest) {
-		return llmRequest.config()
-			.flatMap(config -> config.tools())
-			.flatMap(tools -> tools.stream().filter(t -> t.functionDeclarations().isPresent()).findFirst())
-			.orElse(null);
-	}
+  /**
+   * Finds a tool in GenerateContentConfig that has function calling declarations, or returns null
+   * otherwise.
+   */
+  private static @Nullable Tool findToolWithFunctionDeclarations(LlmRequest llmRequest) {
+    return llmRequest
+        .config()
+        .flatMap(config -> config.tools())
+        .flatMap(
+            tools -> tools.stream().filter(t -> t.functionDeclarations().isPresent()).findFirst())
+        .orElse(null);
+  }
 
-	/**
-	 * Finds all tools in GenerateContentConfig that do not have function calling
-	 * declarations.
-	 */
-	private static ImmutableList<Tool> findToolsWithoutFunctionDeclarations(LlmRequest llmRequest) {
-		return llmRequest.config()
-			.flatMap(config -> config.tools())
-			.map(tools -> tools.stream().filter(t -> t.functionDeclarations().isEmpty()).collect(toImmutableList()))
-			.orElse(ImmutableList.of());
-	}
+  /** Finds all tools in GenerateContentConfig that do not have function calling declarations. */
+  private static ImmutableList<Tool> findToolsWithoutFunctionDeclarations(LlmRequest llmRequest) {
+    return llmRequest
+        .config()
+        .flatMap(config -> config.tools())
+        .map(
+            tools ->
+                tools.stream()
+                    .filter(t -> t.functionDeclarations().isEmpty())
+                    .collect(toImmutableList()))
+        .orElse(ImmutableList.of());
+  }
 
-	/**
-	 * Creates a tool instance from a config.
-	 *
-	 * <p>
-	 * Subclasses should override and implement this method to do custom initialization
-	 * from a config.
-	 * @param config The config for the tool.
-	 * @param configAbsPath The absolute path to the config file that contains the tool
-	 * config.
-	 * @return The tool instance.
-	 * @throws ConfigurationException if the tool cannot be created from the config.
-	 */
-	@DoNotCall("Always throws com.google.adk.agents.ConfigAgentUtils.ConfigurationException")
-	public static BaseTool fromConfig(ToolConfig config, String configAbsPath) throws ConfigurationException {
-		throw new ConfigurationException("fromConfig not implemented for " + BaseTool.class.getSimpleName());
-	}
+  /**
+   * Creates a tool instance from a config.
+   *
+   * <p>Subclasses should override and implement this method to do custom initialization from a
+   * config.
+   *
+   * @param config The config for the tool.
+   * @param configAbsPath The absolute path to the config file that contains the tool config.
+   * @return The tool instance.
+   * @throws ConfigurationException if the tool cannot be created from the config.
+   */
+  @DoNotCall("Always throws com.google.adk.agents.ConfigAgentUtils.ConfigurationException")
+  public static BaseTool fromConfig(ToolConfig config, String configAbsPath)
+      throws ConfigurationException {
+    throw new ConfigurationException(
+        "fromConfig not implemented for " + BaseTool.class.getSimpleName());
+  }
 
-	/** Configuration class for tool arguments that allows arbitrary key-value pairs. */
-	// TODO implement this class
-	public static class ToolArgsConfig extends JsonBaseModel {
+  /** Configuration class for tool arguments that allows arbitrary key-value pairs. */
+  // TODO implement this class
+  public static class ToolArgsConfig extends JsonBaseModel {
 
-		@JsonIgnore
-		private final Map<String, Object> additionalProperties = new HashMap<>();
+    @JsonIgnore private final Map<String, Object> additionalProperties = new HashMap<>();
 
-		public boolean isEmpty() {
-			return additionalProperties.isEmpty();
-		}
+    public boolean isEmpty() {
+      return additionalProperties.isEmpty();
+    }
 
-		public int size() {
-			return additionalProperties.size();
-		}
+    public int size() {
+      return additionalProperties.size();
+    }
 
-		@CanIgnoreReturnValue
-		public ToolArgsConfig put(String key, Object value) {
-			additionalProperties.put(key, value);
-			return this;
-		}
+    @CanIgnoreReturnValue
+    public ToolArgsConfig put(String key, Object value) {
+      additionalProperties.put(key, value);
+      return this;
+    }
 
-		public Object get(String key) {
-			return additionalProperties.get(key);
-		}
+    public Object get(String key) {
+      return additionalProperties.get(key);
+    }
 
-		@JsonAnyGetter
-		public Map<String, Object> getAdditionalProperties() {
-			return additionalProperties;
-		}
+    @JsonAnyGetter
+    public Map<String, Object> getAdditionalProperties() {
+      return additionalProperties;
+    }
 
-		@JsonAnySetter
-		public void setAdditionalProperty(String key, Object value) {
-			additionalProperties.put(key, value);
-		}
+    @JsonAnySetter
+    public void setAdditionalProperty(String key, Object value) {
+      additionalProperties.put(key, value);
+    }
+  }
 
-	}
+  /** Configuration class for a tool definition in YAML/JSON. */
+  public static class ToolConfig extends JsonBaseModel {
 
-	/** Configuration class for a tool definition in YAML/JSON. */
-	public static class ToolConfig extends JsonBaseModel {
+    private String name;
 
-		private String name;
+    private ToolArgsConfig args;
 
-		private ToolArgsConfig args;
+    public ToolConfig() {}
 
-		public ToolConfig() {
-		}
+    public ToolConfig(String name, ToolArgsConfig args) {
+      this.name = name;
+      this.args = args;
+    }
 
-		public ToolConfig(String name, ToolArgsConfig args) {
-			this.name = name;
-			this.args = args;
-		}
+    public String name() {
+      return name;
+    }
 
-		public String name() {
-			return name;
-		}
+    public void setName(String name) {
+      this.name = name;
+    }
 
-		public void setName(String name) {
-			this.name = name;
-		}
+    public ToolArgsConfig args() {
+      return args;
+    }
 
-		public ToolArgsConfig args() {
-			return args;
-		}
-
-		public void setArgs(ToolArgsConfig args) {
-			this.args = args;
-		}
-
-	}
-
+    public void setArgs(ToolArgsConfig args) {
+      this.args = args;
+    }
+  }
 }

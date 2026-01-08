@@ -25,52 +25,59 @@ import com.google.common.collect.ImmutableList;
 import io.reactivex.rxjava3.core.Single;
 import java.util.Map;
 
-/**
- * {@link RequestProcessor} that handles instructions and global instructions for LLM
- * flows.
- */
+/** {@link RequestProcessor} that handles instructions and global instructions for LLM flows. */
 public final class Instructions implements RequestProcessor {
 
-	public Instructions() {
-	}
+  public Instructions() {}
 
-	@Override
-	public Single<RequestProcessor.RequestProcessingResult> processRequest(InvocationContext context,
-			LlmRequest request) {
-		if (!(context.agent() instanceof LlmAgent agent)) {
-			return Single
-				.error(new IllegalArgumentException("Agent in InvocationContext is not an instance of LlmAgent."));
-		}
-		ReadonlyContext readonlyContext = new ReadonlyContext(context);
-		Single<LlmRequest.Builder> builderSingle = Single.just(request.toBuilder());
+  @Override
+  public Single<RequestProcessor.RequestProcessingResult> processRequest(
+      InvocationContext context, LlmRequest request) {
+    if (!(context.agent() instanceof LlmAgent agent)) {
+      return Single.error(
+          new IllegalArgumentException(
+              "Agent in InvocationContext is not an instance of LlmAgent."));
+    }
+    ReadonlyContext readonlyContext = new ReadonlyContext(context);
+    Single<LlmRequest.Builder> builderSingle = Single.just(request.toBuilder());
 
-		// Process global instruction if applicable
-		if (agent.rootAgent() instanceof LlmAgent rootAgent) {
-			builderSingle = appendInstruction(builderSingle, context,
-					rootAgent.canonicalGlobalInstruction(readonlyContext));
-		}
+    // Process global instruction if applicable
+    if (agent.rootAgent() instanceof LlmAgent rootAgent) {
+      builderSingle =
+          appendInstruction(
+              builderSingle, context, rootAgent.canonicalGlobalInstruction(readonlyContext));
+    }
 
-		// Process agent-specific instruction
-		builderSingle = appendInstruction(builderSingle, context, agent.canonicalInstruction(readonlyContext));
+    // Process agent-specific instruction
+    builderSingle =
+        appendInstruction(builderSingle, context, agent.canonicalInstruction(readonlyContext));
 
-		return builderSingle.map(finalBuilder -> RequestProcessor.RequestProcessingResult.create(finalBuilder.build(),
-				ImmutableList.of()));
-	}
+    return builderSingle.map(
+        finalBuilder ->
+            RequestProcessor.RequestProcessingResult.create(
+                finalBuilder.build(), ImmutableList.of()));
+  }
 
-	private Single<LlmRequest.Builder> appendInstruction(Single<LlmRequest.Builder> builderSingle,
-			InvocationContext context, Single<Map.Entry<String, Boolean>> instructionEntrySingle) {
-		return builderSingle.flatMap(builder -> instructionEntrySingle.flatMap(instructionEntry -> {
-			String instruction = instructionEntry.getKey();
-			boolean bypassStateInjection = instructionEntry.getValue();
-			if (instruction.isEmpty()) {
-				return Single.just(builder);
-			}
-			if (bypassStateInjection) {
-				return Single.just(builder.appendInstructions(ImmutableList.of(instruction)));
-			}
-			return InstructionUtils.injectSessionState(context, instruction)
-				.map(resolvedInstr -> builder.appendInstructions(ImmutableList.of(resolvedInstr)));
-		}));
-	}
-
+  private Single<LlmRequest.Builder> appendInstruction(
+      Single<LlmRequest.Builder> builderSingle,
+      InvocationContext context,
+      Single<Map.Entry<String, Boolean>> instructionEntrySingle) {
+    return builderSingle.flatMap(
+        builder ->
+            instructionEntrySingle.flatMap(
+                instructionEntry -> {
+                  String instruction = instructionEntry.getKey();
+                  boolean bypassStateInjection = instructionEntry.getValue();
+                  if (instruction.isEmpty()) {
+                    return Single.just(builder);
+                  }
+                  if (bypassStateInjection) {
+                    return Single.just(builder.appendInstructions(ImmutableList.of(instruction)));
+                  }
+                  return InstructionUtils.injectSessionState(context, instruction)
+                      .map(
+                          resolvedInstr ->
+                              builder.appendInstructions(ImmutableList.of(resolvedInstr)));
+                }));
+  }
 }

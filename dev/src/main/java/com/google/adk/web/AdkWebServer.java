@@ -44,132 +44,125 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @ConfigurationPropertiesScan
 public class AdkWebServer implements WebMvcConfigurer {
 
-  private static final Logger log = LoggerFactory.getLogger(AdkWebServer.class);
+	private static final Logger log = LoggerFactory.getLogger(AdkWebServer.class);
 
-  @Value("${adk.web.ui.dir:#{null}}")
-  private String webUiDir;
+	@Value("${adk.web.ui.dir:#{null}}")
+	private String webUiDir;
 
-  @Bean
-  public BaseSessionService sessionService() {
-    // TODO: Add logic to select service based on config (e.g., DB URL)
-    log.info("Using InMemorySessionService");
-    return new InMemorySessionService();
-  }
+	@Bean
+	public BaseSessionService sessionService() {
+		// TODO: Add logic to select service based on config (e.g., DB URL)
+		log.info("Using InMemorySessionService");
+		return new InMemorySessionService();
+	}
 
-  /**
-   * Provides the singleton instance of the ArtifactService (InMemory). TODO: configure this based
-   * on config (e.g., DB URL)
-   *
-   * @return An instance of BaseArtifactService (currently InMemoryArtifactService).
-   */
-  @Bean
-  public BaseArtifactService artifactService() {
-    log.info("Using InMemoryArtifactService");
-    return new InMemoryArtifactService();
-  }
+	/**
+	 * Provides the singleton instance of the ArtifactService (InMemory). TODO: configure
+	 * this based on config (e.g., DB URL)
+	 * @return An instance of BaseArtifactService (currently InMemoryArtifactService).
+	 */
+	@Bean
+	public BaseArtifactService artifactService() {
+		log.info("Using InMemoryArtifactService");
+		return new InMemoryArtifactService();
+	}
 
-  /**
-   * Provides the singleton instance of the MemoryService (InMemory). Will be made configurable once
-   * we have the Vertex MemoryService.
-   *
-   * @return An instance of BaseMemoryService (currently InMemoryMemoryService).
-   */
-  @Bean
-  public BaseMemoryService memoryService() {
-    log.info("Using InMemoryMemoryService");
-    return new InMemoryMemoryService();
-  }
+	/**
+	 * Provides the singleton instance of the MemoryService (InMemory). Will be made
+	 * configurable once we have the Vertex MemoryService.
+	 * @return An instance of BaseMemoryService (currently InMemoryMemoryService).
+	 */
+	@Bean
+	public BaseMemoryService memoryService() {
+		log.info("Using InMemoryMemoryService");
+		return new InMemoryMemoryService();
+	}
 
-  /**
-   * Configures the Jackson ObjectMapper for JSON serialization. Uses the ADK standard mapper
-   * configuration.
-   *
-   * @return Configured ObjectMapper instance
-   */
-  @Bean
-  public ObjectMapper objectMapper() {
-    return JsonBaseModel.getMapper();
-  }
+	/**
+	 * Configures the Jackson ObjectMapper for JSON serialization. Uses the ADK standard
+	 * mapper configuration.
+	 * @return Configured ObjectMapper instance
+	 */
+	@Bean
+	public ObjectMapper objectMapper() {
+		return JsonBaseModel.getMapper();
+	}
 
-  /**
-   * Configures resource handlers for serving static content (like the Dev UI). Maps requests
-   * starting with "/dev-ui/" to the directory specified by the 'adk.web.ui.dir' system property.
-   */
-  @Override
-  public void addResourceHandlers(ResourceHandlerRegistry registry) {
-    if (webUiDir != null && !webUiDir.isEmpty()) {
-      // Ensure the path uses forward slashes and ends with a slash
-      String location = webUiDir.replace("\\", "/");
-      if (!location.startsWith("file:")) {
-        location = "file:" + location; // Ensure file: prefix
-      }
-      if (!location.endsWith("/")) {
-        location += "/";
-      }
-      log.debug("Mapping URL path /** to static resources at location: {}", location);
-      registry
-          .addResourceHandler("/**")
-          .addResourceLocations(location)
-          .setCachePeriod(0)
-          .resourceChain(true);
+	/**
+	 * Configures resource handlers for serving static content (like the Dev UI). Maps
+	 * requests starting with "/dev-ui/" to the directory specified by the
+	 * 'adk.web.ui.dir' system property.
+	 */
+	@Override
+	public void addResourceHandlers(ResourceHandlerRegistry registry) {
+		if (webUiDir != null && !webUiDir.isEmpty()) {
+			// Ensure the path uses forward slashes and ends with a slash
+			String location = webUiDir.replace("\\", "/");
+			if (!location.startsWith("file:")) {
+				location = "file:" + location; // Ensure file: prefix
+			}
+			if (!location.endsWith("/")) {
+				location += "/";
+			}
+			log.debug("Mapping URL path /** to static resources at location: {}", location);
+			registry.addResourceHandler("/**").addResourceLocations(location).setCachePeriod(0).resourceChain(true);
 
-    } else {
-      log.debug(
-          "System property 'adk.web.ui.dir' or config 'adk.web.ui.dir' is not set. Mapping URL path"
-              + " /** to classpath:/browser/");
-      registry
-          .addResourceHandler("/**")
-          .addResourceLocations("classpath:/browser/")
-          .setCachePeriod(0)
-          .resourceChain(true);
-    }
-  }
+		}
+		else {
+			log.debug("System property 'adk.web.ui.dir' or config 'adk.web.ui.dir' is not set. Mapping URL path"
+					+ " /** to classpath:/browser/");
+			registry.addResourceHandler("/**")
+				.addResourceLocations("classpath:/browser/")
+				.setCachePeriod(0)
+				.resourceChain(true);
+		}
+	}
 
-  /**
-   * Configures simple automated controllers: - Redirects the root path "/" to "/dev-ui". - Forwards
-   * requests to "/dev-ui" to "/dev-ui/index.html" so the ResourceHandler serves it.
-   */
-  @Override
-  public void addViewControllers(ViewControllerRegistry registry) {
-    registry.addRedirectViewController("/", "/dev-ui");
-    registry.addViewController("/dev-ui").setViewName("forward:/index.html");
-    registry.addViewController("/dev-ui/").setViewName("forward:/index.html");
-  }
+	/**
+	 * Configures simple automated controllers: - Redirects the root path "/" to
+	 * "/dev-ui". - Forwards requests to "/dev-ui" to "/dev-ui/index.html" so the
+	 * ResourceHandler serves it.
+	 */
+	@Override
+	public void addViewControllers(ViewControllerRegistry registry) {
+		registry.addRedirectViewController("/", "/dev-ui");
+		registry.addViewController("/dev-ui").setViewName("forward:/index.html");
+		registry.addViewController("/dev-ui/").setViewName("forward:/index.html");
+	}
 
-  /**
-   * Main entry point for the Spring Boot application.
-   *
-   * @param args Command line arguments.
-   */
-  public static void main(String[] args) {
-    // Increase the default websocket buffer size to 10MB to accommodate live API messages.
-    System.setProperty(
-        "org.apache.tomcat.websocket.DEFAULT_BUFFER_SIZE", String.valueOf(10 * 1024 * 1024));
-    SpringApplication.run(AdkWebServer.class, args);
-    log.info("AdkWebServer application started successfully.");
-  }
+	/**
+	 * Main entry point for the Spring Boot application.
+	 * @param args Command line arguments.
+	 */
+	public static void main(String[] args) {
+		// Increase the default websocket buffer size to 10MB to accommodate live API
+		// messages.
+		System.setProperty("org.apache.tomcat.websocket.DEFAULT_BUFFER_SIZE", String.valueOf(10 * 1024 * 1024));
+		SpringApplication.run(AdkWebServer.class, args);
+		log.info("AdkWebServer application started successfully.");
+	}
 
-  // TODO(vorburger): #later return Closeable, which can stop the server (and resets static)
-  public static void start(BaseAgent... agents) {
-    // Disable CompiledAgentLoader by setting property to prevent its creation
-    System.setProperty("adk.agents.loader", "static");
-    // Increase the default websocket buffer size to 10MB to accommodate live API messages.
-    System.setProperty(
-        "org.apache.tomcat.websocket.DEFAULT_BUFFER_SIZE", String.valueOf(10 * 1024 * 1024));
+	// TODO(vorburger): #later return Closeable, which can stop the server (and resets
+	// static)
+	public static void start(BaseAgent... agents) {
+		// Disable CompiledAgentLoader by setting property to prevent its creation
+		System.setProperty("adk.agents.loader", "static");
+		// Increase the default websocket buffer size to 10MB to accommodate live API
+		// messages.
+		System.setProperty("org.apache.tomcat.websocket.DEFAULT_BUFFER_SIZE", String.valueOf(10 * 1024 * 1024));
 
-    // Create Spring Application with custom initializer
-    SpringApplication app = new SpringApplication(AdkWebServer.class);
-    app.addInitializers(
-        new ApplicationContextInitializer<ConfigurableApplicationContext>() {
-          @Override
-          public void initialize(ConfigurableApplicationContext context) {
-            // Register the AgentStaticLoader bean before context refresh
-            DefaultListableBeanFactory beanFactory =
-                (DefaultListableBeanFactory) context.getBeanFactory();
-            beanFactory.registerSingleton("agentLoader", new AgentStaticLoader(agents));
-          }
-        });
+		// Create Spring Application with custom initializer
+		SpringApplication app = new SpringApplication(AdkWebServer.class);
+		app.addInitializers(new ApplicationContextInitializer<ConfigurableApplicationContext>() {
+			@Override
+			public void initialize(ConfigurableApplicationContext context) {
+				// Register the AgentStaticLoader bean before context refresh
+				DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) context.getBeanFactory();
+				beanFactory.registerSingleton("agentLoader", new AgentStaticLoader(agents));
+			}
+		});
 
-    app.run(new String[0]);
-  }
+		app.run(new String[0]);
+	}
+
 }

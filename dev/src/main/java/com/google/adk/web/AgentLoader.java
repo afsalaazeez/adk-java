@@ -22,21 +22,26 @@ import javax.annotation.concurrent.ThreadSafe;
 /**
  * Interface for loading agents to the ADK Web Server.
  *
- * <p>Users implement this interface to register their agents with ADK Web Server.
+ * <p>
+ * Users implement this interface to register their agents with ADK Web Server.
  *
- * <p><strong>Thread Safety:</strong> Implementation must be thread-safe as it will be used as
- * Spring singleton beans and accessed concurrently by multiple HTTP requests.
+ * <p>
+ * <strong>Thread Safety:</strong> Implementation must be thread-safe as it will be used
+ * as Spring singleton beans and accessed concurrently by multiple HTTP requests.
  *
- * <p>Example usage:
+ * <p>
+ * Example usage:
  *
  * <pre>{@code
  * public class MyAgentLoader implements AgentLoader {
- *   @Override
+ *   &#64;Override
  *   public ImmutableList<String> listAgents() {
  *     return ImmutableList.of("chat_bot", "code_assistant");
  *   }
  *
- *   @Override
+ *
+
+&#64;Override
  *   public BaseAgent loadAgent(String name) {
  *     switch (name) {
  *       case "chat_bot": return createChatBot();
@@ -47,7 +52,8 @@ import javax.annotation.concurrent.ThreadSafe;
  * }
  * }</pre>
  *
- * <p>Then use with Maven plugin:
+ * <p>
+ * Then use with Maven plugin:
  *
  * <pre>{@code
  * mvn google-adk:web -Dagents=com.acme.MyAgentLoader
@@ -56,22 +62,21 @@ import javax.annotation.concurrent.ThreadSafe;
 @ThreadSafe
 public interface AgentLoader {
 
-  /**
-   * Returns a list of available agent names.
-   *
-   * @return ImmutableList of agent names. Must not return null - return an empty list if no agents
-   *     are available.
-   */
-  @Nonnull
-  ImmutableList<String> listAgents();
+	/**
+	 * Returns a list of available agent names.
+	 * @return ImmutableList of agent names. Must not return null - return an empty list
+	 * if no agents are available.
+	 */
+	@Nonnull
+	ImmutableList<String> listAgents();
 
-  /**
-   * Loads the BaseAgent instance for the specified agent name.
-   *
-   * @param name the name of the agent to load
-   * @return BaseAgent instance for the given name
-   * @throws java.util.NoSuchElementException if the agent doesn't exist
-   * @throws IllegalStateException if the agent exists but fails to load
-   */
-  BaseAgent loadAgent(String name);
+	/**
+	 * Loads the BaseAgent instance for the specified agent name.
+	 * @param name the name of the agent to load
+	 * @return BaseAgent instance for the given name
+	 * @throws java.util.NoSuchElementException if the agent doesn't exist
+	 * @throws IllegalStateException if the agent exists but fails to load
+	 */
+	BaseAgent loadAgent(String name);
+
 }

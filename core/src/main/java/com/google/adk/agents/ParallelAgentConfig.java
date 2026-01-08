@@ -18,8 +18,7 @@ package com.google.adk.agents;
 /** Configuration for ParallelAgent. */
 public class ParallelAgentConfig extends BaseAgentConfig {
 
-	public ParallelAgentConfig() {
-		super("ParallelAgent");
-	}
-
+  public ParallelAgentConfig() {
+    super("ParallelAgent");
+  }
 }

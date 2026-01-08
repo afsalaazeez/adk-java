@@ -18,8 +18,7 @@ package com.google.adk.agents;
 /** Configuration for SequentialAgent. */
 public class SequentialAgentConfig extends BaseAgentConfig {
 
-	public SequentialAgentConfig() {
-		super("SequentialAgent");
-	}
-
+  public SequentialAgentConfig() {
+    super("SequentialAgent");
+  }
 }

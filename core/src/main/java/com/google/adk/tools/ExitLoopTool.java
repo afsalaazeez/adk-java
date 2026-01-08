@@ -21,34 +21,30 @@ import com.google.adk.tools.Annotations.Schema;
 /** Tool for exiting execution of {@link com.google.adk.agents.LoopAgent}. */
 public final class ExitLoopTool {
 
-	public static final FunctionTool INSTANCE = FunctionTool.create(ExitLoopTool.class, "exitLoop");
+  public static final FunctionTool INSTANCE = FunctionTool.create(ExitLoopTool.class, "exitLoop");
 
-	/**
-	 * Exit the {@link com.google.adk.agents.LoopAgent} execution.
-	 *
-	 * <p>
-	 * Usage example in an LlmAgent:
-	 *
-	 * <pre>{@code
-	 * LlmAgent subAgent = LlmAgent.builder()
-	 *     .addTool(ExitLoopTool.INSTANCE)
-	 *     .build();
-	 * }</pre>
-	 *
-	 * <p>
-	 * The @Schema name and description is consistent with the Python version.
-	 *
-	 * <p>
-	 * Refer to:
-	 * https://github.com/google/adk-python/blob/main/src/google/adk/tools/exit_loop_tool.py
-	 */
-	@Schema(name = "exit_loop",
-			description = "Exits the loop.\n\nCall this function only when you are instructed to do so.")
-	public static void exitLoop(ToolContext toolContext) {
-		toolContext.setActions(toolContext.actions().toBuilder().escalate(true).build());
-	}
+  /**
+   * Exit the {@link com.google.adk.agents.LoopAgent} execution.
+   *
+   * <p>Usage example in an LlmAgent:
+   *
+   * <pre>{@code
+   * LlmAgent subAgent = LlmAgent.builder()
+   *     .addTool(ExitLoopTool.INSTANCE)
+   *     .build();
+   * }</pre>
+   *
+   * <p>The @Schema name and description is consistent with the Python version.
+   *
+   * <p>Refer to:
+   * https://github.com/google/adk-python/blob/main/src/google/adk/tools/exit_loop_tool.py
+   */
+  @Schema(
+      name = "exit_loop",
+      description = "Exits the loop.\n\nCall this function only when you are instructed to do so.")
+  public static void exitLoop(ToolContext toolContext) {
+    toolContext.setActions(toolContext.actions().toBuilder().escalate(true).build());
+  }
 
-	private ExitLoopTool() {
-	}
-
+  private ExitLoopTool() {}
 }
